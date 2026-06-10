@@ -916,6 +916,40 @@
         
         let activeEventId = null;
         let activeLeftTab = 'list'; // 'list' or 'gallery'
+        let gdriveMapping = {};
+        let gasWebAppUrl = '';
+
+        // Fetch Google Drive mapping if it exists
+        fetch('gdrive_mapping.json')
+            .then(response => {
+                if (!response.ok) throw new Error('Network response was not ok');
+                return response.json();
+            })
+            .then(data => {
+                gdriveMapping = data;
+                if (data['__gas_web_app_url__']) {
+                    gasWebAppUrl = data['__gas_web_app_url__'];
+                    console.log('Google Apps Script Web App URL loaded:', gasWebAppUrl);
+                }
+                console.log('Google Drive mapping loaded:', Object.keys(gdriveMapping).length, 'assets mapped.');
+                
+                // Update live badge if connected to Google Drive
+                const liveBadge = document.querySelector('.live-badge');
+                if (liveBadge) {
+                    liveBadge.style.background = 'rgba(26, 115, 232, 0.2)';
+                    liveBadge.style.borderColor = 'rgba(26, 115, 232, 0.4)';
+                    const liveDot = liveBadge.querySelector('.live-dot');
+                    if (liveDot) liveDot.style.background = '#1a73e8';
+                    const liveText = liveBadge.querySelector('.live-text');
+                    if (liveText) liveText.textContent = 'GOOGLE DRIVE SYNC';
+                }
+                
+                // Re-render contents to load images from Google Drive thumbnails
+                filterEvents();
+            })
+            .catch(error => {
+                console.warn('Google Drive mapping file (gdrive_mapping.json) not found or invalid. Using local fallbacks.', error);
+            });
 
         // Copy protection funny messages
         const funnyMessages = [
@@ -991,7 +1025,7 @@
                 listContainer.innerHTML = '<div style="text-align:center; padding:3rem; color:var(--muted); font-size:12px;">No matching reports found</div>';
             } else {
                 listContainer.innerHTML = filteredEvents.map(e => `
-                    <div class="event-card ${e.id === activeEventId ? 'active' : ''}" onclick="selectEvent('${e.id}', '${e.filepath}', '${e.title.replace(/'/g, "\'")}', '${e.pdf_filepath}')">
+                    <div class="event-card ${e.id === activeEventId ? 'active' : ''}" onclick="selectEvent('${e.id}', '${e.filepath}', '${e.title.replace(/'/g, "\\'")}', '${e.pdf_filepath}')">
                         <div class="event-card-header">
                             <span class="event-id">${e.id}</span>
                             <span class="event-year">${e.year}</span>
@@ -1013,10 +1047,15 @@
             } else {
                 galleryContainer.innerHTML = `
                     <div class="gallery-grid">
-                        ${galleryEvents.map(e => `
-                            <div class="gallery-card ${e.id === activeEventId ? 'active' : ''}" onclick="selectEvent('${e.id}', '${e.filepath}', '${e.title.replace(/'/g, "\'")}', '${e.pdf_filepath}')">
+                        ${galleryEvents.map(e => {
+                            let imgPath = e.images[0];
+                            if (gdriveMapping && gdriveMapping[imgPath]) {
+                                imgPath = 'https://drive.google.com/thumbnail?id=' + gdriveMapping[imgPath] + '&sz=s400';
+                            }
+                            return `
+                            <div class="gallery-card ${e.id === activeEventId ? 'active' : ''}" onclick="selectEvent('${e.id}', '${e.filepath}', '${e.title.replace(/'/g, "\\'")}', '${e.pdf_filepath}')">
                                 <div class="gallery-img-wrapper">
-                                    <img src="${e.images[0]}" alt="${e.id} photo" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                                    <img src="${imgPath}" alt="${e.id} photo" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
                                     <div class="gallery-img-placeholder" style="display:none;">📷</div>
                                 </div>
                                 <div class="gallery-info">
@@ -1025,7 +1064,8 @@
                                     <span class="gallery-year">${e.year}</span>
                                 </div>
                             </div>
-                        `).join('')}
+                            `;
+                        }).join('')}
                     </div>
                 `;
             }
@@ -1054,10 +1094,12 @@
             renderContents(filtered);
         }
 
-        let activeEventHtmlPath = '';
-        let activeEventPdfPath = '';
+        let activeEventHtmlPathResolved = '';
+        let activeEventPdfPreviewPathResolved = '';
+        let activeEventPdfDownloadPathResolved = '';
         let currentViewMode = 'html';
 
+        // Set view mode (HTML or PDF)
         function setViewMode(mode) {
             if (mode === currentViewMode) return;
             currentViewMode = mode;
@@ -1067,17 +1109,37 @@
             
             const iframe = document.getElementById('viewer-iframe');
             if (mode === 'html') {
-                iframe.src = activeEventHtmlPath;
+                iframe.src = activeEventHtmlPathResolved;
             } else if (mode === 'pdf') {
-                iframe.src = activeEventPdfPath;
+                iframe.src = activeEventPdfPreviewPathResolved;
             }
         }
 
         // Load specific event into iframe viewport
         function selectEvent(id, path, title, pdfPath) {
             activeEventId = id;
-            activeEventHtmlPath = path;
-            activeEventPdfPath = (pdfPath && pdfPath !== 'None' && pdfPath !== '') ? pdfPath : '';
+            
+            let resolvedHtmlPath = path;
+            let resolvedPdfPreviewPath = (pdfPath && pdfPath !== 'None' && pdfPath !== '') ? pdfPath : '';
+            let resolvedPdfDownloadPath = resolvedPdfPreviewPath;
+            
+            if (gdriveMapping) {
+                // If HTML file is mapped and GAS URL is configured
+                if (gdriveMapping[path] && gasWebAppUrl) {
+                    resolvedHtmlPath = gasWebAppUrl + '?id=' + gdriveMapping[path];
+                }
+                
+                // If PDF file is mapped
+                if (pdfPath && gdriveMapping[pdfPath]) {
+                    let pdfFileId = gdriveMapping[pdfPath];
+                    resolvedPdfPreviewPath = 'https://drive.google.com/file/d/' + pdfFileId + '/preview';
+                    resolvedPdfDownloadPath = 'https://drive.google.com/uc?export=download&id=' + pdfFileId;
+                }
+            }
+            
+            activeEventHtmlPathResolved = resolvedHtmlPath;
+            activeEventPdfPreviewPathResolved = resolvedPdfPreviewPath;
+            activeEventPdfDownloadPathResolved = resolvedPdfDownloadPath;
             
             // Toggle highlight in list and gallery
             document.querySelectorAll('.event-card, .gallery-card').forEach(card => card.classList.remove('active'));
@@ -1096,15 +1158,15 @@
             titleSpan.textContent = `${id}: ${title}`;
 
             // Setup PDF Toggler and Download Link
-            if (activeEventPdfPath) {
-                downloadBtn.href = activeEventPdfPath;
+            if (resolvedPdfPreviewPath) {
+                downloadBtn.href = activeEventPdfDownloadPathResolved;
                 downloadBtn.style.display = 'inline-flex';
                 toggleContainer.style.display = 'inline-flex';
                 
                 if (currentViewMode === 'pdf') {
-                    iframe.src = activeEventPdfPath;
+                    iframe.src = activeEventPdfPreviewPathResolved;
                 } else {
-                    iframe.src = activeEventHtmlPath;
+                    iframe.src = activeEventHtmlPathResolved;
                 }
             } else {
                 downloadBtn.style.display = 'none';
@@ -1114,7 +1176,7 @@
                 currentViewMode = 'html';
                 document.getElementById('view-mode-html').classList.add('active');
                 document.getElementById('view-mode-pdf').classList.remove('active');
-                iframe.src = activeEventHtmlPath;
+                iframe.src = activeEventHtmlPathResolved;
             }
         }
 
