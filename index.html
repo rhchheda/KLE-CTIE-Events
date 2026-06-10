@@ -1,0 +1,1127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Event Reports Dashboard · KLE-CTIE</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Outfit:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --navy: #0d1b3e;             /* Primary deep blue */
+            --navy-mid: #1a2f5e;         /* Primary royal/mid-navy */
+            --gold: #c9a84c;             /* Gold accent */
+            --gold-l: #e8c97a;           /* Light gold accent */
+            --gold-pale: #f5e9c8;        /* Pale gold */
+            --bg-primary: #f0ece0;       /* Soft cream bg */
+            --bg-secondary: #ffffff;     /* White card bg */
+            --bg-tertiary: #faf8f3;      /* Light cream cards */
+            --white: #ffffff;
+            --text: #0d1b3e;             /* Dark body text */
+            --muted: #6b7a99;            /* Muted text */
+            --border: rgba(13,27,62,0.10); /* Section border color */
+            --shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+            --green: #1a7a3e;
+            --red: #c0392b;
+            --footer-h: 36px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -khtml-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+
+        input, select, textarea {
+            -webkit-user-select: text;
+            -moz-user-select: text;
+            -ms-user-select: text;
+            user-select: text;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text);
+            padding-bottom: calc(var(--footer-h) + 1.25rem);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Scrollbars */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--bg-primary);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(13, 27, 62, 0.2);
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--gold);
+        }
+
+        .dashboard-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            padding: 1.5rem;
+            max-width: 1800px;
+            margin: 0 auto;
+            width: 100%;
+            flex-grow: 1;
+            min-height: 0;
+        }
+
+        /* STICKY FOOTER */
+        .sticky-footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: var(--footer-h);
+            background: var(--navy);
+            border-top: 1px solid rgba(201, 168, 76, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 300;
+        }
+        .sticky-footer span {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.5);
+            letter-spacing: 0.06em;
+        }
+        .sticky-footer b {
+            color: var(--gold-l);
+            font-weight: 400;
+            font-style: italic;
+        }
+
+        /* Sneaky Toast Message */
+        #sneakyToast {
+            position: fixed;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--navy);
+            color: var(--gold-l);
+            padding: 12px 24px;
+            border-radius: 40px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            font-weight: 500;
+            z-index: 9999;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(201, 168, 76, 0.3);
+            backdrop-filter: blur(8px);
+            white-space: nowrap;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        #sneakyToast.show {
+            opacity: 1;
+        }
+
+        /* HEADER */
+        .header {
+            background: linear-gradient(120deg, var(--navy), var(--navy-mid));
+            padding: 2rem;
+            position: relative;
+            overflow: hidden;
+            border-radius: 16px 16px 0 0;
+            flex-shrink: 0;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+        }
+        .header::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-image: linear-gradient(rgba(201, 168, 76, 0.04) 1px, transparent 1px),
+                             linear-gradient(90deg, rgba(201, 168, 76, 0.04) 1px, transparent 1px);
+            background-size: 50px 50px;
+        }
+        .header-inner {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            flex-wrap: wrap;
+            gap: 1rem;
+            position: relative;
+            z-index: 1;
+        }
+        .header-left .eyebrow {
+            font-size: 11px;
+            font-weight: 500;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: var(--gold-l);
+            margin-bottom: 0.5rem;
+        }
+        .header-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: clamp(24px, 4vw, 36px);
+            font-weight: 600;
+            color: var(--white);
+            line-height: 1.1;
+            margin-bottom: 0.2rem;
+        }
+        .header-title span {
+            color: var(--gold-l);
+            font-style: italic;
+        }
+        .header-sub {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.5);
+        }
+        .gold-bar {
+            height: 3px;
+            background: linear-gradient(to right, var(--gold), var(--gold-l), var(--gold));
+            border-radius: 2px;
+            max-width: 240px;
+            margin-top: 0.4rem;
+        }
+        .header-right {
+            text-align: right;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 0.3rem;
+        }
+        .live-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background: rgba(27, 122, 62, 0.2);
+            border: 1px solid rgba(27, 122, 62, 0.4);
+            border-radius: 20px;
+            padding: 4px 10px;
+        }
+        .live-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #2ecc71;
+            animation: pulse 1.8s infinite;
+        }
+        @keyframes pulse {
+            0% { opacity: 0.4; }
+            50% { opacity: 1; }
+            100% { opacity: 0.4; }
+        }
+        .live-text {
+            font-size: 10px;
+            color: #2ecc71;
+            font-weight: 500;
+            letter-spacing: 0.06em;
+        }
+
+        /* KPI Panel */
+        .kpi-row {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 12px;
+            margin: 1rem 0;
+            flex-shrink: 0;
+        }
+        .kpi-card {
+            position: relative;
+            overflow: hidden;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 0.85rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            text-align: center;
+            box-shadow: var(--shadow);
+            transition: all 0.3s ease;
+        }
+        .kpi-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 30px;
+            height: 3px;
+            border-radius: 0 0 4px 4px;
+            background: linear-gradient(90deg, var(--gold), var(--gold-l));
+            opacity: 0.7;
+            transition: width 0.3s ease;
+        }
+        .kpi-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 24px rgba(13, 27, 62, 0.08);
+            border-color: rgba(201, 168, 76, 0.3);
+        }
+        .kpi-card:hover::before {
+            width: 60px;
+        }
+        .kpi-title {
+            font-size: 9px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--muted);
+            margin-bottom: 4px;
+            font-weight: 600;
+        }
+        .kpi-value {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 26px;
+            font-weight: 600;
+            color: var(--navy);
+            line-height: 1.1;
+        }
+        .kpi-subtext {
+            font-size: 10px;
+            color: var(--muted);
+            margin-top: 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* Main Workspace Split */
+        .workspace-split {
+            display: grid;
+            grid-template-columns: 410px 1fr;
+            gap: 1.25rem;
+            flex-grow: 1;
+            min-height: 0;
+            margin-bottom: 1rem;
+        }
+
+        /* Left Side: Events List Panel */
+        .list-panel {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+            box-shadow: var(--shadow);
+        }
+
+        .filter-header {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            flex-shrink: 0;
+        }
+
+        /* Left Tabs (List vs Gallery) */
+        .left-tabs {
+            display: flex;
+            background: var(--bg-primary);
+            padding: 4px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+        .left-tab-btn {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--muted);
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 12px;
+            transition: all 0.2s ease;
+            font-family: 'Outfit', sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.4rem;
+        }
+        .left-tab-btn.active {
+            background: var(--navy);
+            color: var(--white);
+            box-shadow: 0 2px 8px rgba(13,27,62,0.15);
+        }
+        .left-tab-btn:hover:not(.active) {
+            color: var(--navy);
+            background: rgba(13, 27, 62, 0.05);
+        }
+
+        .search-box {
+            position: relative;
+        }
+        .search-box input {
+            width: 100%;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 8px 12px 8px 2.25rem;
+            color: var(--text);
+            font-size: 13px;
+            outline: none;
+            transition: border-color 0.2s;
+            font-family: 'Outfit', sans-serif;
+        }
+        .search-box input:focus {
+            border-color: var(--gold);
+        }
+        .search-box svg {
+            position: absolute;
+            left: 0.75rem;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 14px;
+            height: 14px;
+            fill: var(--muted);
+        }
+
+        .filters-row {
+            display: flex;
+            gap: 0.5rem;
+        }
+        .select-filter {
+            flex: 1;
+            min-width: 0;
+            width: 100%;
+            max-width: 180px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 6px;
+            border-radius: 8px;
+            font-size: 12px;
+            outline: none;
+            cursor: pointer;
+            font-family: 'Outfit', sans-serif;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            overflow: hidden;
+        }
+        .select-filter:focus {
+            border-color: var(--gold);
+        }
+
+        /* Scrollable container for card lists */
+        .list-container {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            background: var(--bg-tertiary);
+            border-radius: 0 0 16px 16px;
+        }
+
+        /* View Content Swapping */
+        .view-content {
+            display: none;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+        .view-content.active {
+            display: flex;
+        }
+
+        /* Event Cards */
+        .event-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 0.85rem;
+            cursor: pointer;
+            transition: all 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+            box-shadow: 0 2px 8px rgba(13,27,62,0.02);
+        }
+        .event-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: transparent;
+            transition: background-color 0.2s;
+        }
+        .event-card:hover {
+            transform: translateX(3px);
+            border-color: var(--gold-l);
+        }
+        .event-card.active {
+            background: var(--bg-secondary);
+            border-color: var(--gold);
+            box-shadow: 0 4px 15px rgba(201, 168, 76, 0.15);
+        }
+        .event-card.active::before {
+            background: linear-gradient(to bottom, var(--gold), var(--gold-l));
+        }
+
+        .event-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .event-id {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--navy);
+            background: var(--bg-primary);
+            padding: 2px 6px;
+            border-radius: 4px;
+            border: 1px solid var(--border);
+        }
+        .event-year {
+            font-size: 11px;
+            color: var(--muted);
+            font-weight: 500;
+        }
+        .event-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--navy);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .event-meta {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 11px;
+            color: var(--muted);
+        }
+        .event-meta-item {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 140px;
+        }
+        .event-participants {
+            align-self: flex-end;
+            font-size: 10px;
+            background: rgba(26, 90, 211, 0.08);
+            color: var(--navy-mid);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+
+        /* Gallery Card Styles */
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.75rem;
+        }
+        .gallery-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 2px 8px rgba(13,27,62,0.02);
+            position: relative;
+        }
+        .gallery-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: transparent;
+            transition: background-color 0.2s;
+            z-index: 10;
+        }
+        .gallery-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--gold-l);
+        }
+        .gallery-card.active {
+            border-color: var(--gold);
+            box-shadow: 0 4px 15px rgba(201, 168, 76, 0.15);
+        }
+        .gallery-card.active::before {
+            background: linear-gradient(to right, var(--gold), var(--gold-l));
+        }
+        .gallery-img-wrapper {
+            width: 100%;
+            height: 100px;
+            background: linear-gradient(135deg, #f0f3ff, #e3e8fb);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .gallery-img-wrapper img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .gallery-img-placeholder {
+            font-size: 24px;
+            opacity: 0.35;
+        }
+        .gallery-info {
+            padding: 0.6rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+            min-width: 0;
+        }
+        .gallery-id {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 9px;
+            font-weight: 600;
+            color: var(--navy);
+            align-self: flex-start;
+        }
+        .gallery-title {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--navy);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .gallery-year {
+            font-size: 9px;
+            color: var(--muted);
+        }
+
+        /* Right Side: Event Detail Viewer */
+        .viewer-panel {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+            position: relative;
+            box-shadow: var(--shadow);
+        }
+        .viewer-header {
+            padding: 0.8rem 1.25rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+            background: var(--bg-tertiary);
+            border-radius: 16px 16px 0 0;
+        }
+        .viewer-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--navy);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            max-width: 65%;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .viewer-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* View Mode Toggle */
+        .view-mode-toggle {
+            display: inline-flex;
+            background: var(--bg-primary);
+            padding: 3px;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            margin-right: 0.5rem;
+        }
+        .view-mode-btn {
+            background: transparent;
+            border: none;
+            color: var(--muted);
+            padding: 4px 14px;
+            border-radius: 18px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 11px;
+            transition: all 0.2s ease;
+            font-family: 'Outfit', sans-serif;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .view-mode-btn.active {
+            background: var(--navy);
+            color: var(--white);
+            box-shadow: 0 2px 6px rgba(26,60,124,0.15);
+        }
+        .view-mode-btn:hover:not(.active) {
+            color: var(--navy);
+        }
+
+        /* Action Buttons */
+        .pdf-btn {
+            background: var(--white);
+            color: var(--red);
+            border: 1px solid rgba(192, 57, 43, 0.25);
+            padding: 5px 12px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 11px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            transition: all 0.2s ease;
+            font-family: 'Outfit', sans-serif;
+            text-decoration: none;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+        }
+        .pdf-btn:hover {
+            background: var(--red);
+            color: var(--white);
+            border-color: var(--red);
+            box-shadow: 0 4px 10px rgba(192, 57, 43, 0.25);
+        }
+        .pdf-btn svg {
+            width: 12px;
+            height: 12px;
+        }
+
+        .iframe-container {
+            flex-grow: 1;
+            position: relative;
+            background: var(--bg-primary);
+            border-radius: 0 0 16px 16px;
+            overflow: hidden;
+        }
+        #viewer-iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            display: none;
+        }
+        .viewer-placeholder {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 2rem;
+            color: var(--muted);
+            background: var(--white);
+            border-radius: 0 0 16px 16px;
+        }
+        .viewer-placeholder svg {
+            width: 50px;
+            height: 50px;
+            fill: var(--muted);
+            opacity: 0.35;
+            margin-bottom: 1rem;
+        }
+        .viewer-placeholder h3 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 24px;
+            color: var(--navy);
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        @media (max-width: 900px) {
+            .workspace-split {
+                grid-template-columns: 1fr;
+            }
+            .viewer-panel {
+                display: none;
+            }
+            .kpi-row {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Sneaky Toast Container -->
+    <div id="sneakyToast"></div>
+
+    <!-- Sticky Footer -->
+    <div class="sticky-footer">
+        <span>Made with ❤ ~rhc &nbsp;<b>·</b>&nbsp; EE Lab, KLE-CTIE &nbsp;<b>·</b>&nbsp; Event Reports Consolidated Dashboard</span>
+    </div>
+
+    <div class="dashboard-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-inner">
+                <div class="header-left">
+                    <div class="eyebrow">KLE‑CTIE · Activity Intelligence | FY 2015–16 to 2022–23</div>
+                    <div class="header-title">Event Performance Dashboard</div>
+                    <div class="header-sub">Year‑wise breakdown of all events — track volume, type, participation, and trends.</div>
+                    <div class="header-tip" style="margin-top: 0.6rem; font-size: 12px; color: var(--gold-pale); opacity: 0.95; display: flex; align-items: center; gap: 6px;">
+                        <span>📌 <b>Tip:</b> Select two or more years to compare. FY2015‑16 is the baseline.</span>
+                    </div>
+                </div>
+                <div class="header-right">
+                    <div class="live-badge"><div class="live-dot"></div><span class="live-text">LOCAL DATABASE</span></div>
+                </div>
+            </div>
+        </header>
+
+        <!-- KPI Row -->
+        <div class="kpi-row">
+            <div class="kpi-card">
+                <span class="kpi-title">Total Events</span>
+                <span class="kpi-value">244</span>
+                <span class="kpi-subtext">Across 7 academic cycles</span>
+            </div>
+            <div class="kpi-card">
+                <span class="kpi-title">Est. Participants</span>
+                <span class="kpi-value">7,784+</span>
+                <span class="kpi-subtext">Registered / attended</span>
+            </div>
+            <div class="kpi-card">
+                <span class="kpi-title">Visual Reports</span>
+                <span class="kpi-value" style="color:var(--navy);">74</span>
+                <span class="kpi-subtext">Events containing photos</span>
+            </div>
+            <div class="kpi-card">
+                <span class="kpi-title">Top Host Venue</span>
+                <span class="kpi-value" style="font-size: 1.05rem; font-weight:600; line-height: 1.2;">KLE-CTIE, Hubli</span>
+                <span class="kpi-subtext">Primary venue</span>
+            </div>
+            <div class="kpi-card">
+                <span class="kpi-title">Top Organizer</span>
+                <span class="kpi-value" style="font-size: 1.05rem; font-weight:600; line-height: 1.2;">KLE-CTIE</span>
+                <span class="kpi-subtext">Primary facilitator group</span>
+            </div>
+        </div>
+
+        <!-- Split Workspace -->
+        <div class="workspace-split">
+            <!-- Left Panel: List/Gallery Panel -->
+            <div class="list-panel">
+                <div class="filter-header">
+                    <!-- Left Tab toggler (List vs Gallery) -->
+                    <div class="left-tabs">
+                        <button class="left-tab-btn active" id="tab-list-btn" onclick="switchLeftTab('list')">
+                            📋 List View
+                        </button>
+                        <button class="left-tab-btn" id="tab-gallery-btn" onclick="switchLeftTab('gallery')">
+                            📸 Image Gallery
+                        </button>
+                    </div>
+
+                    <div class="search-box">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+                        </svg>
+                        <input type="text" id="event-search" placeholder="Search title, venue, organizer..." oninput="filterEvents()">
+                    </div>
+                    <div class="filters-row">
+                        <select class="select-filter" id="year-filter" onchange="filterEvents()">
+                            <option value="">All Academic Years</option>
+                            <!-- Populated dynamically -->
+                        </select>
+                        <select class="select-filter" id="venue-filter" onchange="filterEvents()">
+                            <option value="">All Host Venues</option>
+                            <!-- Populated dynamically -->
+                        </select>
+                    </div>
+                </div>
+
+                <div class="list-container" id="events-list">
+                    <!-- Cards will load inside container views -->
+                    <div class="view-content active" id="list-view-content">
+                        <!-- Loaded dynamically -->
+                    </div>
+                    <div class="view-content" id="gallery-view-content">
+                        <!-- Loaded dynamically -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Panel: Event Report Viewer -->
+            <div class="viewer-panel">
+                <div class="viewer-header">
+                    <div class="viewer-title">
+                        <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path d="M14 4.5V14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2h5.5L14 4.5zm-3 0A1.5 1.5 0 0 1 9.5 3V1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V4.5h-2z"/></svg>
+                        <span id="active-event-title">Select Event to View Details</span>
+                    </div>
+                    <div class="viewer-actions">
+                        <div class="view-mode-toggle" id="view-mode-toggle" style="display: none;">
+                            <button class="view-mode-btn active" id="view-mode-html" onclick="setViewMode('html')">🌐 HTML View</button>
+                            <button class="view-mode-btn" id="view-mode-pdf" onclick="setViewMode('pdf')">📄 PDF View</button>
+                        </div>
+                        <a id="download-pdf-btn" class="pdf-btn" href="#" target="_blank" download style="display: none;">
+                            <svg viewBox="0 0 16 16" fill="currentColor">
+                                <path d="M14 14V4.5L9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2zM9.5 1.5L14 6h-4.5V1.5zM4 1h5v5h5v9H4V1zM5 8h6v1H5V8zm0 2h6v1H5v-1zm0 2h4v1H5v-1z"/>
+                            </svg>
+                            Download PDF
+                        </a>
+                    </div>
+                </div>
+                <div class="iframe-container">
+                    <iframe id="viewer-iframe" src=""></iframe>
+                    <div class="viewer-placeholder" id="viewer-placeholder">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>
+                        </svg>
+                        <h3>No Event Selected</h3>
+                        <p>Select any academic event report from the left-hand listing or image gallery to preview it inside the dashboard viewport.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JS Logic -->
+    <script>
+        const events = [{"id": "E2021_20", "title": "Innovation & Entrepreneurship Week \u2013 Session on Angel Investment/VC Funding", "year": "Aug-20-Jun-21", "date": "30-07-2021", "venue": "Online (Webex)", "organizer": "KLE-CTIE / KLE Tech IIC", "objective": "Educate participants on early-stage funding mechanisms.\u200b", "participants_raw": "Not specified", "participants_count": 0, "images": ["KLE-CTIE-Events/Events_Aug-20-Jun-21/images/E2021_20_a.jpg"], "pdf_filepath": "KLE-CTIE-Events/Events_Aug-20-Jun-21/pdf/E2021_20.pdf", "filepath": "KLE-CTIE-Events/Events_Aug-20-Jun-21/E2021_20.html"}, {"id": "E2021_19", "title": "Innovation & Entrepreneurship Week \u2013 Session on Lean Startup & Minimum Viable Product/Business", "year": "Aug-20-Jun-21", "date": "29-07-2021", "venue": "Online (Webex)", "organizer": "KLE-CTIE / KLE Tech IIC", "objective": "Introduce lean startup principles and MVP concept.\u200b", "participants_raw": "Not specified", "participants_count": 0, "images": ["KLE-CTIE-Events/Events_Aug-20-Jun-21/images/E2021_19_a.jpg"], "pdf_filepath": "KLE-CTIE-Events/Events_Aug-20-Jun-21/pdf/E2021_19.pdf", "filepath": "KLE-CTIE-Events/Events_Aug-20-Jun-21/E2021_19.html"}, {"id": "E2021_18", "title": "Innovation & Entrepreneurship Week \u2013 Session on Accelerators/Incubation Opportunities for Students & Faculties", "year": "Aug-20-Jun-21", "date": "28-07-2021", "venue": "Online (Webex)", "organizer": "KLE-CTIE / KLE Tech IIC", "objective": "Highlight accelerator and incubation opportunities for early-stage entrepreneurs.\u200b", "participants_raw": "Not specified", "participants_count": 0, "images": ["KLE-CTIE-Events/Events_Aug-20-Jun-21/images/E2021_18_a.jpg"], "pdf_filepath": "KLE-CTIE-Events/Events_Aug-20-Jun-21/pdf/E2021_18.pdf", "filepath": "KLE-CTIE-Events/Events_Aug-20-Jun-21/E2021_18.html"}, {"id": "E2021_17", "title": "Innovation & Entrepreneurship Week \u2013 Session on \u201cHow to Plan for Startup and Legal & Ethical Steps\u201d", "year": "Aug-20-Jun-21", "date": "27-07-2021", "venue": "Online (Webex)", "organizer": "KLE-CTIE / KLE Tech IIC", "objective": "Educate participants on legal and ethical aspects of starting up.\u200b", "participants_raw": "Not specified", "participants_count": 0, "images": ["KLE-CTIE-Events/Events_Aug-20-Jun-21/images/E2021_17_a.jpg"], "pdf_filepath": "KLE-CTIE-Events/Events_Aug-20-Jun-21/pdf/E2021_17.pdf", "filepath": "KLE-CTIE-Events/Events_Aug-20-Jun-21/E2021_17.html"}, {"id": "E2021_16", "title": "Innovation & Entrepreneurship Week \u2013 Session on Building an Innovation/Product Fit for Market", "year": "Aug-20-Jun-21", "date": "24-07-2021", "venue": "Online (Webex)", "organizer": "KLE-CTIE / KLE Tech IIC", "objective": "Help participants understand product\u2013market fit in innovation.\u200b", "participants_raw": "Not specified", "participants_count": 0, "images": ["KLE-CTIE-Events/Events_Aug-20-Jun-21/images/E2021_16_a.jpg"], "pdf_filepath": "KLE-CTIE-Events/Events_Aug-20-Jun-21/pdf/E2021_16.pdf", "filepath": "KLE-CTIE-Events/Events_Aug-20-Jun-21/E2021_16.html"}, {"id": "E2021_15", "title": "Innovation & Entrepreneurship Week \u2013 Session on Prototype Validation and Converting Prototype into a Startup", "year": "Aug-20-Jun-21", "date": "23-07-2021", "venue": "Online (Webex)", "organizer": "KLE-CTIE / KLE Tech IIC", "objective": "Guide participants on validating prototypes and transitioning to startups.\u200b", "participants_raw": "Not specified", "participants_count": 0, "images": ["KLE-CTIE-Events/Events_Aug-20-Jun-21/images/E2021_15_a.jpg"], "pdf_filepath": "KLE-CTIE-Events/Events_Aug-20-Jun-21/pdf/E2021_15.pdf", "filepath": "KLE-CTIE-Events/Events_Aug-20-Jun-21/E2021_15.html"}, {"id": "E2021_14", "title": "Innovation & Entrepreneurship Week \u2013 Workshop on Prototype/Process Design and Development", "year": "Aug-20-Jun-21", "date": "22-07-2021", "venue": "Online (Webex)", "organizer": "KLE-CTIE / KLE Tech IIC", "objective": "Teach students fundamentals of prototype and process design.\u200b", "participants_raw": "Not specified", "participants_count": 0, "images": ["KLE-CTIE-Events/Events_Aug-20-Jun-21/images/E2021_14_a.jpg"], "pdf_filepath": "KLE-CTIE-Events/Events_Aug-20-Jun-21/pdf/E2021_14.pdf", "filepath": "KLE-CTIE-Events/Events_Aug-20-Jun-21/E2021_14.html"}, {"id": "E2021_13", "title": "Innovation & Entrepreneurship Week \u2013 Interactive Session/Mentoring with Successful Startup Founders", "year": "Aug-20-Jun-21", "date": "21-07-2021", "venue": "Online (Webex)", "organizer": "KLE-CTIE / KLE Tech IIC", "objective": "Expose students to campus-based startup founders and their journeys.\u200b", "participants_raw": "Not specified", "participants_count": 0, "images": ["KLE-CTIE-Events/Events_Aug-20-Jun-21/images/E2021_13_a.jpg"], "pdf_filepath": "KLE-CTIE-Events/Events_Aug-20-Jun-21/pdf/E2021_13.pdf", "filepath": "KLE-CTIE-Events/Events_Aug-20-Jun-21/E2021_13.html"}, {"id": "E2021_12", "title": "Idea to Prototype ESDM Lab \u2013 Installation and Commissioning", "year": "Aug-20-Jun-21", "date": "06-07-2021", "venue": "KLE-CTIE / ESDM Lab", "organizer": "KLE-CTIE / EPIC", "objective": "Commission new ESDM lab and train users.\u200b", "participants_raw": "Over 20 representatives", "participants_count": 20, "images": ["KLE-CTIE-Events/Events_Aug-20-Jun-21/images/E2021_12_a.jpg", "KLE-CTIE-Events/Events_Aug-20-Jun-21/images/E2021_12_b.jpg", "KLE-CTIE-Events/Events_Aug-20-Jun-21/images/E2021_12_c.jpg"], "pdf_filepath": "KLE-CTIE-Events/Events_Aug-20-Jun-21/pdf/E2021_12.pdf", "filepath": "KLE-CTIE-Events/Events_Aug-20-Jun-21/E2021_12.html"}, {"id": "E2021_11", "title": "Review of Funding Proposals under NIDHI\u2013SSS", "year": "Aug-20-Jun-21", "date": "21-05-2021", "venue": "Online / KLE-CTIE", "organizer": "KLE-CTIE (NIDHI-SSS SSMC)", "objective": "Evaluate startups for productization and scale-up funding.\u200b", "participants_raw": "8 startups", "participants_count": 8, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_Aug-20-Jun-21/pdf/E2021_11.pdf", "filepath": "KLE-CTIE-Events/Events_Aug-20-Jun-21/E2021_11.html"}, {"id": "E2021_10", "title": "Webinar on Opportunities for ESDM Startups", "year": "Aug-20-Jun-21", "date": "23-03-2021", "venue": "Online", "organizer": "HEX / KLE-CTIE with KITS & IESA", "objective": "Inform startups about ESDM opportunities and support ecosystem.\u200b", "participants_raw": "Not specified", "participants_count": 0, "images": ["KLE-CTIE-Events/Events_Aug-20-Jun-21/images/E2021_10_a.jpg"], "pdf_filepath": "KLE-CTIE-Events/Events_Aug-20-Jun-21/pdf/E2021_10.pdf", "filepath": "KLE-CTIE-Events/Events_Aug-20-Jun-21/E2021_10.html"}, {"id": "E2021_09", "title": "HEX Cohort Application Review \u2013 First Cohort", "year": "Aug-20-Jun-21", "date": "05-03-2021", "venue": "KLE-CTIE / HEX", "organizer": "HEX PEOC & SSC (industry and academia)", "objective": "Select startups for the first HEX cohort based on business model and support needs.\u200b", "participants_raw": "6 startups", "participants_count": 6, "images": ["KLE-CTIE-Events/Events_Aug-20-Jun-21/images/E2021_09_a.jpg"], "pdf_filepath": "KLE-CTIE-Events/Events_Aug-20-Jun-21/pdf/E2021_09.pdf", "filepath": "KLE-CTIE-Events/Events_Aug-20-Jun-21/E2021_09.html"}, {"id": "E2021_08", "title": "MeitY TIDE 2.0 Application Review", "year": "Aug-20-Jun-21", "date": "27-01-2021", "venue": "Online / KLE-CTIE", "organizer": "KLE-CTIE (TIDE 2.0)", "objective": "Review startup applications for TIDE 2.0 funding.\u200b", "participants_raw": "7 startups", "participants_count": 7, "images": ["KLE-CTIE-Events/Events_Aug-20-Jun-21/images/E2021_08_a.jpg"], "pdf_filepath": "KLE-CTIE-Events/Events_Aug-20-Jun-21/pdf/E2021_08.pdf", "filepath": "KLE-CTIE-Events/Events_Aug-20-Jun-21/E2021_08.html"}, {"id": "E2021_07", "title": "National Innovation and Startup Policy (NISP) Workshop / Orientation", "year": "Aug-20-Jun-21", "date": "16-01-2021", "venue": "Online (Webex link)", "organizer": "NISP Committee & KLE-CTIE", "objective": "Orient faculty and students on NISP and its benefits.\u200b", "participants_raw": "Not specified", "participants_count": 0, "images": ["KLE-CTIE-Events/Events_Aug-20-Jun-21/images/E2021_07_a.jpg"], "pdf_filepath": "KLE-CTIE-Events/Events_Aug-20-Jun-21/pdf/E2021_07.pdf", "filepath": "KLE-CTIE-Events/Events_Aug-20-Jun-21/E2021_07.html"}, {"id": "E2021_06", "title": "Review of Idea Buildathon", "year": "Aug-20-Jun-21", "date": "44204", "venue": "Online (Google Meet)", "organizer": "MiB \u2013 Make in BVB / KLE-CTIE", "objective": "Evaluate student product ideas and guide them towards prototyping.\u200b", "participants_raw": "20 student teams", "participants_count": 20, "images": ["KLE-CTIE-Events/Events_Aug-20-Jun-21/images/E2021_06_a.jpg"], "pdf_filepath": "KLE-CTIE-Events/Events_Aug-20-Jun-21/pdf/E2021_06.pdf", "filepath": "KLE-CTIE-Events/Events_Aug-20-Jun-21/E2021_06.html"}, {"id": "E2021_05", "title": "KLE-CTIE Awarded NIDHI\u2013Seed Support Scheme (NIDHI-SSS)", "year": "Aug-20-Jun-21", "date": "December", "venue": "KLE-CTIE", "organizer": "NSTEDB, DST with KLE-CTIE", "objective": "Enable CTIE to provide seed support funding to startups.\u200b", "participants_raw": "Not applicable (scheme-level)", "participants_count": 0, "images": ["KLE-CTIE-Events/Events_Aug-20-Jun-21/images/E2021_05_a.jpg"], "pdf_filepath": "KLE-CTIE-Events/Events_Aug-20-Jun-21/pdf/E2021_05.pdf", "filepath": "KLE-CTIE-Events/Events_Aug-20-Jun-21/E2021_05.html"}, {"id": "E2021_04", "title": "HEX (Hubli ESDM eXchange) Launch", "year": "Aug-20-Jun-21", "date": "02-12-2020", "venue": "Online (Airmeet) / KLE Tech hosted", "organizer": "KLE-CTIE with KITS GoK, IESA, KLE Tech", "objective": "Launch dedicated ESDM/VLSI incubation platform for Hubli region.\u200b", "participants_raw": "Not specified (online participants)", "participants_count": 0, "images": ["KLE-CTIE-Events/Events_Aug-20-Jun-21/images/E2021_04_a.jpg", "KLE-CTIE-Events/Events_Aug-20-Jun-21/images/E2021_04_b.jpg"], "pdf_filepath": "KLE-CTIE-Events/Events_Aug-20-Jun-21/pdf/E2021_04.pdf", "filepath": "KLE-CTIE-Events/Events_Aug-20-Jun-21/E2021_04.html"}, {"id": "E2021_03", "title": "Institute Innovation Council (IIC) Result Announcement 2019\u20132020", "year": "Aug-20-Jun-21", "date": "September", "venue": "Online", "organizer": "IIC Council, MoE / KLE Tech", "objective": "Share national IIC performance and ranking.\u200b", "participants_raw": "Not specified", "participants_count": 0, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_Aug-20-Jun-21/pdf/E2021_03.pdf", "filepath": "KLE-CTIE-Events/Events_Aug-20-Jun-21/E2021_03.html"}, {"id": "E2021_02", "title": "MeitY TIDE 2.0 \u2013 1 Grant & 4 EiR Application Review", "year": "Aug-20-Jun-21", "date": "27-08-2020", "venue": "Online / KLE-CTIE", "organizer": "KLE-CTIE (TIDE 2.0)", "objective": "Evaluate grant and EiR applications under TIDE 2.0.\u200b", "participants_raw": "5 applicants (1 grant, 4 EiR)", "participants_count": 5, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_Aug-20-Jun-21/pdf/E2021_02.pdf", "filepath": "KLE-CTIE-Events/Events_Aug-20-Jun-21/E2021_02.html"}, {"id": "E2021_01", "title": "Online ARIIA Result Announcement", "year": "Aug-20-Jun-21", "date": "18-08-2020", "venue": "Online", "organizer": "KLE Technological University", "objective": "Share ARIIA 2020 results and institutional performance.\u200b", "participants_raw": "Not specified", "participants_count": 0, "images": ["KLE-CTIE-Events/Events_Aug-20-Jun-21/images/E2021_01_a.jpg"], "pdf_filepath": "KLE-CTIE-Events/Events_Aug-20-Jun-21/pdf/E2021_01.pdf", "filepath": "KLE-CTIE-Events/Events_Aug-20-Jun-21/E2021_01.html"}, {"id": "E2223_12", "title": "Events and Ministry Activities (Workshops, Training, IIC Events)", "year": "2022-23", "date": "2022\u201323", "venue": "KLE-CTIE / KLE Tech", "organizer": "KLE-CTIE / Ministry partners", "objective": "Conduct ministry-linked and CTIE networking events for startups.\u200b", "participants_raw": "Multiple events (counts included in \u201c6 events\u201d stat)", "participants_count": 6, "images": ["KLE-CTIE-Events/Events_2022-23/images/E2223_12_a.jpg", "KLE-CTIE-Events/Events_2022-23/images/E2223_12_b.jpg", "KLE-CTIE-Events/Events_2022-23/images/E2223_12_c.jpg"], "pdf_filepath": "KLE-CTIE-Events/Events_2022-23/pdf/E2223_12.pdf", "filepath": "KLE-CTIE-Events/Events_2022-23/E2223_12.html"}, {"id": "E2223_11", "title": "Startup India Seed Fund Scheme (SISFS) \u2013 CTIE Participation", "year": "2022-23", "date": "2022\u201323", "venue": "KLE-CTIE", "organizer": "Startup India / KLE-CTIE", "objective": "Provide seed funding to early-stage startups for PoC, prototype and market entry.\u200b", "participants_raw": "Not specified", "participants_count": 0, "images": ["KLE-CTIE-Events/Events_2022-23/images/E2223_11_a.jpg", "KLE-CTIE-Events/Events_2022-23/images/E2223_11_b.jpg"], "pdf_filepath": "KLE-CTIE-Events/Events_2022-23/pdf/E2223_11.pdf", "filepath": "KLE-CTIE-Events/Events_2022-23/E2223_11.html"}, {"id": "E2223_10", "title": "MeitY TIDE 2.0 Grant Winners \u2013 CTIE Announcement", "year": "2022-23", "date": "2022\u201323", "venue": "KLE Tech Senate Hall, Hubballi", "organizer": "KLE-CTIE / MeitY TIDE 2.0", "objective": "Announce and celebrate grant disbursal to startups under TIDE 2.0.\u200b", "participants_raw": "11 startups (grant-in-aid); 1 startup with Rs 35 lakh investment", "participants_count": 0, "images": ["KLE-CTIE-Events/Events_2022-23/images/E2223_10_a.jpg", "KLE-CTIE-Events/Events_2022-23/images/E2223_10_b.jpg", "KLE-CTIE-Events/Events_2022-23/images/E2223_10_c.jpg"], "pdf_filepath": "KLE-CTIE-Events/Events_2022-23/pdf/E2223_10.pdf", "filepath": "KLE-CTIE-Events/Events_2022-23/E2223_10.html"}, {"id": "E2223_09", "title": "2-Day Workshop \u2013 \u201cMaxilators: Inspiring Next Generation Leaders\u201d", "year": "2022-23", "date": "13-05-2023", "venue": "KLE-CTIE / KLE Tech", "organizer": "KLE-CTIE", "objective": "Address critical gaps in startups and help build strong, performance-driven businesses.\u200b", "participants_raw": "Not specified", "participants_count": 0, "images": ["KLE-CTIE-Events/Events_2022-23/images/E2223_09_a.jpg", "KLE-CTIE-Events/Events_2022-23/images/E2223_09_b.jpg", "KLE-CTIE-Events/Events_2022-23/images/E2223_09_c.jpg", "KLE-CTIE-Events/Events_2022-23/images/E2223_09_d.jpg"], "pdf_filepath": "KLE-CTIE-Events/Events_2022-23/pdf/E2223_09.pdf", "filepath": "KLE-CTIE-Events/Events_2022-23/E2223_09.html"}, {"id": "E2223_08", "title": "Workshop \u2013 \u201cIn-Spire, Resuscitator Automation System\u201d / Startup Journey Session", "year": "2022-23", "date": "2023", "venue": "KLE-CTIE / KLE Tech", "organizer": "KLE-CTIE", "objective": "Inspire next-generation leaders through startup product journey.\u200b", "participants_raw": "Not specified", "participants_count": 0, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2022-23/pdf/E2223_08.pdf", "filepath": "KLE-CTIE-Events/Events_2022-23/E2223_08.html"}, {"id": "E2223_07", "title": "CTIE Facts & Achievements \u2013 FY 2022\u201323", "year": "2022-23", "date": "FY", "venue": "KLE-CTIE", "organizer": "KLE-CTIE", "objective": "Summarize incubation and activity metrics for the year.\u200b", "participants_raw": "21 startups incubated (current strength 58); 16 startups funded; 6 events; 125 internships; 232 jobs", "participants_count": 21, "images": ["KLE-CTIE-Events/Events_2022-23/images/E2223_07_a.jpg"], "pdf_filepath": "KLE-CTIE-Events/Events_2022-23/pdf/E2223_07.pdf", "filepath": "KLE-CTIE-Events/Events_2022-23/E2223_07.html"}, {"id": "E2223_06", "title": "Minor Program in Entrepreneurship", "year": "2022-23", "date": "2022\u201323", "venue": "KLE Technological University", "organizer": "KLE-CTIE", "objective": "Equip engineering students with structured startup-building skills over five courses.\u200b", "participants_raw": "Not specified", "participants_count": 0, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2022-23/pdf/E2223_06.pdf", "filepath": "KLE-CTIE-Events/Events_2022-23/E2223_06.html"}, {"id": "E2223_05", "title": "Global Entrepreneurship & Innovation \u2013 Student Exchange Program", "year": "2022-23", "date": "2022\u201323", "venue": "Online/UMass Lowell & KLE Tech", "organizer": "KLE-CTIE with Manning School of Business, UMass Lowell", "objective": "Expose students to global entrepreneurship and innovation practices.\u200b", "participants_raw": "Not specified", "participants_count": 0, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2022-23/pdf/E2223_05.pdf", "filepath": "KLE-CTIE-Events/Events_2022-23/E2223_05.html"}, {"id": "E2223_04", "title": "Buildathon \u2013 9-day Product Build-up", "year": "2022-23", "date": "2022\u201323", "venue": "KLE Technological University", "organizer": "KLE-CTIE / MiB", "objective": "Make students think deeply about problems and customer needs.\u200b", "participants_raw": "Not specified", "participants_count": 0, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2022-23/pdf/E2223_04.pdf", "filepath": "KLE-CTIE-Events/Events_2022-23/E2223_04.html"}, {"id": "E2223_03", "title": "Ideathon \u2013 Ideation Camp", "year": "2022-23", "date": "2022\u201323", "venue": "KLE Technological University", "organizer": "KLE-CTIE / MiB", "objective": "Guide students through structured ideation and problem understanding.\u200b", "participants_raw": "Not specified", "participants_count": 0, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2022-23/pdf/E2223_03.pdf", "filepath": "KLE-CTIE-Events/Events_2022-23/E2223_03.html"}, {"id": "E2223_02", "title": "Butterfly \u2013 Business Plan Competition", "year": "2022-23", "date": "2022\u201323", "venue": "KLE Technological University", "organizer": "KLE-CTIE / MiB", "objective": "Help 2nd\u20133rd year engineering students design ventures to incubate at CTIE.\u200b", "participants_raw": "Not specified", "participants_count": 0, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2022-23/pdf/E2223_02.pdf", "filepath": "KLE-CTIE-Events/Events_2022-23/E2223_02.html"}, {"id": "E2223_01", "title": "PUPA \u2013 Student Product & Enterprise Event", "year": "2022-23", "date": "2022\u201323", "venue": "KLE Technological University", "organizer": "MiB (Make in BVB) / KLE-CTIE", "objective": "Provide accelerated entrepreneurial experience through product build and sales.\u200b", "participants_raw": "Not specified (high participation)", "participants_count": 0, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2022-23/pdf/E2223_01.pdf", "filepath": "KLE-CTIE-Events/Events_2022-23/E2223_01.html"}, {"id": "E2122_16", "title": "Support to Colleges for IIC Registration", "year": "2021-22", "date": "2021\u201322", "venue": "Online / outreach", "organizer": "KLE-CTIE", "objective": "Help new institutions register on IIC portal.\u200b", "participants_raw": "At least 5 colleges listed", "participants_count": 5, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2021-22/pdf/E2122_16.pdf", "filepath": "KLE-CTIE-Events/Events_2021-22/E2122_16.html"}, {"id": "E2122_15", "title": "IIC Mentor\u2013Mentee Program Session", "year": "2021-22", "date": "2021\u201322", "venue": "Online / host colleges", "organizer": "Institution\u2019s Innovation Council / KLE-CTIE", "objective": "Guide mentee institutions on building I&E ecosystem under IIC Mentor\u2013Mentee scheme.\u200b", "participants_raw": "Multiple institutions (names listed)", "participants_count": 0, "images": ["KLE-CTIE-Events/Events_2021-22/images/E2122_15_a.jpg", "KLE-CTIE-Events/Events_2021-22/images/E2122_15_b.jpg", "KLE-CTIE-Events/Events_2021-22/images/E2122_15_c.jpg"], "pdf_filepath": "KLE-CTIE-Events/Events_2021-22/pdf/E2122_15.pdf", "filepath": "KLE-CTIE-Events/Events_2021-22/E2122_15.html"}, {"id": "E2122_14", "title": "Institution\u2019s Innovation Council (IIC) 2020\u20132021 Result", "year": "2021-22", "date": "2021\u201322", "venue": "Online", "organizer": "IIC, MoE", "objective": "Share IIC performance result for AY 2020\u201321.\u200b", "participants_raw": "Not specified", "participants_count": 0, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2021-22/pdf/E2122_14.pdf", "filepath": "KLE-CTIE-Events/Events_2021-22/E2122_14.html"}, {"id": "E2122_13", "title": "Webinar Series \u2013 BIG Awareness", "year": "2021-22", "date": "2021\u201322", "venue": "Online", "organizer": "Dept. of Biotechnology & Biochemical Engineering with Bangalore Bioinnovation Centre", "objective": "Spread awareness about BIRAC BIG program and IP aspects.\u200b", "participants_raw": "Not specified", "participants_count": 0, "images": ["KLE-CTIE-Events/Events_2021-22/images/E2122_13_a.jpg", "KLE-CTIE-Events/Events_2021-22/images/E2122_13_b.jpg"], "pdf_filepath": "KLE-CTIE-Events/Events_2021-22/pdf/E2122_13.pdf", "filepath": "KLE-CTIE-Events/Events_2021-22/E2122_13.html"}, {"id": "E2122_12", "title": "Multiverse of Madness \u2013 Advertising Idea Contest", "year": "2021-22", "date": "2021\u201322", "venue": "KLE-CTIE / KLE Tech", "organizer": "KLE-CTIE / MiB", "objective": "Encourage creative advertising and pitching skills in upcoming entrepreneurs.\u200b", "participants_raw": "Not specified", "participants_count": 0, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2021-22/pdf/E2122_12.pdf", "filepath": "KLE-CTIE-Events/Events_2021-22/E2122_12.html"}, {"id": "E2122_11", "title": "ELVIC \u2013 Civil & Electronics Hackathon", "year": "2021-22", "date": "Final", "venue": "KLE-CTIE / MiB / Online & on campus", "organizer": "CTIE, HEX, MiB with Jalavahini Management Services Pvt Ltd", "objective": "Find technologically advanced solutions for civil engineering using electronics and related tech.\u200b", "participants_raw": "Around 200 participants", "participants_count": 200, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2021-22/pdf/E2122_11.pdf", "filepath": "KLE-CTIE-Events/Events_2021-22/E2122_11.html"}, {"id": "E2122_10", "title": "Ignite the Entrepreneur in You", "year": "2021-22", "date": "2021\u201322", "venue": "KLE-CTIE / KLE Tech", "organizer": "KLE-CTIE", "objective": "Connect startups with industry experts, corporates, mentors and students; encourage entrepreneurship.\u200b", "participants_raw": "9 student internship applicants; 110+ enquiries", "participants_count": 9, "images": ["KLE-CTIE-Events/Events_2021-22/images/E2122_10_a.jpg"], "pdf_filepath": "KLE-CTIE-Events/Events_2021-22/pdf/E2122_10.pdf", "filepath": "KLE-CTIE-Events/Events_2021-22/E2122_10.html"}, {"id": "E2122_09", "title": "Tech Park Tours for Visiting Institutions and Companies", "year": "2021-22", "date": "2021\u201322", "venue": "KLE Tech Park, Hubballi", "organizer": "KLE-CTIE", "objective": "Showcase Tech Park startups and facilities to visitors.\u200b", "participants_raw": "At least 10 visiting organizations listed", "participants_count": 10, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2021-22/pdf/E2122_09.pdf", "filepath": "KLE-CTIE-Events/Events_2021-22/E2122_09.html"}, {"id": "E2122_08", "title": "Collaboration / Partnership Discussions with Institutions & Organizations", "year": "2021-22", "date": "2021\u201322", "venue": "Multiple institutions", "organizer": "KLE-CTIE", "objective": "Build network of partner incubators and colleges.\u200b", "participants_raw": "13 institutions listed", "participants_count": 13, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2021-22/pdf/E2122_08.pdf", "filepath": "KLE-CTIE-Events/Events_2021-22/E2122_08.html"}, {"id": "E2122_07", "title": "TiECON 2022, Hubli \u2013 Awards and Participation", "year": "2021-22", "date": "TiECON", "venue": "Hubballi (TiECON venue)", "organizer": "TiE Hubli with ecosystem partners", "objective": "Showcase CTIE startups and recognize contributions at TiECON.\u200b", "participants_raw": "Not specified", "participants_count": 0, "images": ["KLE-CTIE-Events/Events_2021-22/images/E2122_07_a.jpg", "KLE-CTIE-Events/Events_2021-22/images/E2122_07_b.jpg"], "pdf_filepath": "KLE-CTIE-Events/Events_2021-22/pdf/E2122_07.pdf", "filepath": "KLE-CTIE-Events/Events_2021-22/E2122_07.html"}, {"id": "E2122_06", "title": "One-day Workshop on Basics of Embedded Systems \u2013 Hands-on Design, Assembly & Testing of Power Supply", "year": "2021-22", "date": "2021\u201322", "venue": "KLE Society\u2019s Smt. C I Munavalli Polytechnic, Hubli", "organizer": "HEX / KLE-CTIE", "objective": "Introduce diploma students to basic embedded systems and product development steps.\u200b", "participants_raw": "Not specified", "participants_count": 0, "images": ["KLE-CTIE-Events/Events_2021-22/images/E2122_06_a.jpg"], "pdf_filepath": "KLE-CTIE-Events/Events_2021-22/pdf/E2122_06.pdf", "filepath": "KLE-CTIE-Events/Events_2021-22/E2122_06.html"}, {"id": "E2122_05", "title": "One-day Workshop on Enabling Institutions to Develop On-campus ESDM Product Development Ecosystem", "year": "2021-22", "date": "2021\u201322", "venue": "Host NAIN college campus", "organizer": "HEX / KLE-CTIE", "objective": "Help NAIN college build capability for on-campus ESDM product development.\u200b", "participants_raw": "Not specified", "participants_count": 0, "images": ["KLE-CTIE-Events/Events_2021-22/images/E2122_05_a.jpg"], "pdf_filepath": "KLE-CTIE-Events/Events_2021-22/pdf/E2122_05.pdf", "filepath": "KLE-CTIE-Events/Events_2021-22/E2122_05.html"}, {"id": "E2122_04", "title": "HEX \u2013 Funding Support to Startups", "year": "2021-22", "date": "2021\u201322", "venue": "HEX / KLE-CTIE", "organizer": "HEX PEOC/SSC", "objective": "Provide funding to selected HEX startups.\u200b", "participants_raw": "Few startups (exact number not specified)", "participants_count": 0, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2021-22/pdf/E2122_04.pdf", "filepath": "KLE-CTIE-Events/Events_2021-22/E2122_04.html"}, {"id": "E2122_03", "title": "NIDHI \u2013 Seed Support Scheme (NIDHI-SSS)", "year": "2021-22", "date": "2021\u201322", "venue": "KLE-CTIE", "organizer": "KLE-CTIE / NSTEDB DST", "objective": "Provide seed funding for innovation, technology development and deployment.\u200b", "participants_raw": "4 startup applications (mentioned for this cycle)", "participants_count": 4, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2021-22/pdf/E2122_03.pdf", "filepath": "KLE-CTIE-Events/Events_2021-22/E2122_03.html"}, {"id": "E2122_02", "title": "MeitY TIDE 2.0 \u2013 Grants and Scale-up Support", "year": "2021-22", "date": "2021\u201322", "venue": "KLE-CTIE", "organizer": "KLE-CTIE / MeitY TIDE 2.0", "objective": "Provide EIR, grant and scale-up investment to ICTE startups.\u200b", "participants_raw": "3 grant applicants + 1 scale-up startup (explicit); more over year", "participants_count": 0, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2021-22/pdf/E2122_02.pdf", "filepath": "KLE-CTIE-Events/Events_2021-22/E2122_02.html"}, {"id": "E2122_01", "title": "TBI \u2013 Promotion of Technology-Based Entrepreneurship", "year": "2021-22", "date": "2021\u201322", "venue": "KLE-CTIE, Tech Park", "organizer": "KLE-CTIE / DST TBI", "objective": "Support technology-based new ventures and commercialization.\u200b", "participants_raw": "Not specified", "participants_count": 0, "images": ["KLE-CTIE-Events/Events_2021-22/images/E2122_01_a.jpg"], "pdf_filepath": "KLE-CTIE-Events/Events_2021-22/pdf/E2122_01.pdf", "filepath": "KLE-CTIE-Events/Events_2021-22/E2122_01.html"}, {"id": "E080", "title": "Events Postponed/Suspended due to COVID-19", "year": "2019-20", "date": "From", "venue": "Planned venues \u2013 various", "organizer": "KLE-CTIE", "objective": "Communicate impact of COVID-19 on planned events.\u200b", "participants_raw": "Not applicable", "participants_count": 0, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2019-20/pdf/E080.pdf", "filepath": "KLE-CTIE-Events/Events_2019-20/E080.html"}, {"id": "E079", "title": "Elevate 2020 Finale", "year": "2019-20", "date": "09-03-2020", "venue": "Bangalore (Finale)", "organizer": "Govt of Karnataka \u2013 Elevate", "objective": "Support CTIE startups participating in state-level Elevate program.\u200b", "participants_raw": "Eleven at zonal; six at finale; two winners", "participants_count": 0, "images": ["KLE-CTIE-Events/Events_2019-20/images/E079_a.jpg"], "pdf_filepath": "KLE-CTIE-Events/Events_2019-20/pdf/E079.pdf", "filepath": "KLE-CTIE-Events/Events_2019-20/E079.html"}, {"id": "E078", "title": "Investor Meet with Mr. Vivek Dahiya, Boudhik Ventures", "year": "2019-20", "date": "05-03-2020", "venue": "KLE-CTIE, Hubli", "organizer": "KLE-CTIE", "objective": "Provide another investor interface with interest in IP and technology.\u200b", "participants_raw": "Multiple startups", "participants_count": 0, "images": ["KLE-CTIE-Events/Events_2019-20/images/E078_a.jpg"], "pdf_filepath": "KLE-CTIE-Events/Events_2019-20/pdf/E078.pdf", "filepath": "KLE-CTIE-Events/Events_2019-20/E078.html"}, {"id": "E077", "title": "Investor Meet with Mr. Anand Sankeshwar", "year": "2019-20", "date": "28-02-2020", "venue": "KLE-CTIE, Hubli", "organizer": "KLE-CTIE", "objective": "Connect regional business leader and investor with CTIE startups.\u200b", "participants_raw": "Multiple startups", "participants_count": 0, "images": ["KLE-CTIE-Events/Events_2019-20/images/E077_a.jpg"], "pdf_filepath": "KLE-CTIE-Events/Events_2019-20/pdf/E077.pdf", "filepath": "KLE-CTIE-Events/Events_2019-20/E077.html"}, {"id": "E076", "title": "MHRD IIC Ambassador Training", "year": "2019-20", "date": "26-02-2020", "venue": "ACS College of Engineering, Bangalore", "organizer": "MHRD IIC", "objective": "Train faculty on design thinking, IPR, entrepreneurship, and incubation management.\u200b", "participants_raw": "Four faculty", "participants_count": 0, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2019-20/pdf/E076.pdf", "filepath": "KLE-CTIE-Events/Events_2019-20/E076.html"}, {"id": "E075", "title": "Mentor Me \u2013 Mentoring Session with Mr. Anand Kadakol", "year": "2019-20", "date": "28-02-2020", "venue": "KLE-CTIE, Hubli", "organizer": "KLE-CTIE", "objective": "Mentor newly incubated and existing startups.", "participants_raw": "Four startups", "participants_count": 0, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2019-20/pdf/E075.pdf", "filepath": "KLE-CTIE-Events/Events_2019-20/E075.html"}, {"id": "E074", "title": "Mentor Me \u2013 Mentoring Session with Mr. Anand Kadakol", "year": "2019-20", "date": "25-02-2020", "venue": "KLE-CTIE, Hubli", "organizer": "KLE-CTIE", "objective": "Follow through on deliverables after Mumbai investor visit.", "participants_raw": "Four startups", "participants_count": 0, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2019-20/pdf/E074.pdf", "filepath": "KLE-CTIE-Events/Events_2019-20/E074.html"}, {"id": "E073", "title": "Seminar on Entrepreneurial & Job Opportunities in VLSI Design", "year": "2019-20", "date": "22-02-2020", "venue": "KLE Technological University", "organizer": "KLE-CTIE", "objective": "Expose students to VLSI industry opportunities and entrepreneurship.\u200b", "participants_raw": "Not specified", "participants_count": 0, "images": ["KLE-CTIE-Events/Events_2019-20/images/E073_a.jpg"], "pdf_filepath": "KLE-CTIE-Events/Events_2019-20/pdf/E073.pdf", "filepath": "KLE-CTIE-Events/Events_2019-20/E073.html"}, {"id": "E072", "title": "Investor Meet with Mr. Vivek Oberoi @ Mumbai", "year": "2019-20", "date": "22-02-2020", "venue": "Mumbai", "organizer": "KLE-CTIE / partners", "objective": "Connect promising startups with high-profile investor.\u200b", "participants_raw": "Three startups", "participants_count": 0, "images": ["KLE-CTIE-Events/Events_2019-20/images/E072_a.jpg"], "pdf_filepath": "KLE-CTIE-Events/Events_2019-20/pdf/E072.pdf", "filepath": "KLE-CTIE-Events/Events_2019-20/E072.html"}, {"id": "E071", "title": "Mentor Me \u2013 Mentoring Session with Mr. Anand Kadakol", "year": "2019-20", "date": "20-02-2020", "venue": "KLE-CTIE, Hubli", "organizer": "KLE-CTIE", "objective": "Discuss funding and volume planning with new startup; follow up with investor-bound startups.", "participants_raw": "Five startups", "participants_count": 0, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2019-20/pdf/E071.pdf", "filepath": "KLE-CTIE-Events/Events_2019-20/E071.html"}, {"id": "E070", "title": "Mentor Me \u2013 Mentoring Session with Dr. Anant Koppar", "year": "2019-20", "date": "20-02-2020", "venue": "KLE-CTIE, Hubli", "organizer": "KLE-CTIE", "objective": "Follow up on introduced business prospects and mentor new startups.", "participants_raw": "Six startups", "participants_count": 0, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2019-20/pdf/E070.pdf", "filepath": "KLE-CTIE-Events/Events_2019-20/E070.html"}, {"id": "E069", "title": "Mentor Me \u2013 Mentoring Session with Mr. Anand Kadakol", "year": "2019-20", "date": "18-02-2020", "venue": "KLE-CTIE, Hubli", "organizer": "KLE-CTIE", "objective": "Continue mentoring with focus on potential collaborations.\u200b", "participants_raw": "Six startups", "participants_count": 0, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2019-20/pdf/E069.pdf", "filepath": "KLE-CTIE-Events/Events_2019-20/E069.html"}, {"id": "E068", "title": "Ideation Camp", "year": "2019-20", "date": "14-02-2020", "venue": "KLE Technological University", "organizer": "KLE-CTIE / MiB", "objective": "Sow seed of entrepreneurship among students through structured ideation.\u200b", "participants_raw": "50 students", "participants_count": 50, "images": ["KLE-CTIE-Events/Events_2019-20/images/E068_a.jpg", "KLE-CTIE-Events/Events_2019-20/images/E068_b.jpg"], "pdf_filepath": "KLE-CTIE-Events/Events_2019-20/pdf/E068.pdf", "filepath": "KLE-CTIE-Events/Events_2019-20/E068.html"}, {"id": "E067", "title": "Mentor Me \u2013 Mentoring Session with Mr. Anand Kadakol", "year": "2019-20", "date": "14-02-2020", "venue": "KLE-CTIE, Hubli", "organizer": "KLE-CTIE", "objective": "Prepare startups for upcoming investor meetings in Mumbai and Bangalore.\u200b", "participants_raw": "Six startups", "participants_count": 0, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2019-20/pdf/E067.pdf", "filepath": "KLE-CTIE-Events/Events_2019-20/E067.html"}, {"id": "E066", "title": "IIC Quarter 3 Council Meeting", "year": "2019-20", "date": "13-02-2020", "venue": "Old Senate Hall, KLE Tech", "organizer": "KLE Technological University IIC Council", "objective": "Review past quarter events and plan upcoming IIC activities.\u200b", "participants_raw": "Not specified", "participants_count": 0, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2019-20/pdf/E066.pdf", "filepath": "KLE-CTIE-Events/Events_2019-20/E066.html"}, {"id": "E065", "title": "Mentor Me \u2013 Mentoring Session with Mr. Anand Kadakol", "year": "2019-20", "date": "11-02-2020", "venue": "KLE-CTIE, Hubli", "organizer": "KLE-CTIE", "objective": "Continue mentoring key startups on product and market strategy.", "participants_raw": "Two startups", "participants_count": 0, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2019-20/pdf/E065.pdf", "filepath": "KLE-CTIE-Events/Events_2019-20/E065.html"}, {"id": "E064", "title": "Pitching by Potential Startups \u2013 AJ Deals & Kalpas Innovations", "year": "2019-20", "date": "11-02-2020", "venue": "KLE-CTIE, Hubli", "organizer": "KLE-CTIE", "objective": "Evaluate two potential startups for incubation.\u200b", "participants_raw": "Two startups", "participants_count": 0, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2019-20/pdf/E064.pdf", "filepath": "KLE-CTIE-Events/Events_2019-20/E064.html"}, {"id": "E063", "title": "TiE Sharks Pitching \u2013 TiECON 2020", "year": "2019-20", "date": "02-02-2020", "venue": "TiECON 2020, Hubballi", "organizer": "TiE", "objective": "Provide national-level pitching platform and investor interaction for CTIE startups.\u200b", "participants_raw": "Nine startups", "participants_count": 0, "images": ["KLE-CTIE-Events/Events_2019-20/images/E063_a.jpg", "KLE-CTIE-Events/Events_2019-20/images/E063_b.jpg"], "pdf_filepath": "KLE-CTIE-Events/Events_2019-20/pdf/E063.pdf", "filepath": "KLE-CTIE-Events/Events_2019-20/E063.html"}, {"id": "E062", "title": "TiE Sharks Pre-pitch with Mentors", "year": "2019-20", "date": "31-01-2020", "venue": "KLE-CTIE, Hubli", "organizer": "KLE-CTIE / TiE", "objective": "Review and refine pitches of startups shortlisted for TiE Sharks.\u200b", "participants_raw": "Nine startups", "participants_count": 0, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2019-20/pdf/E062.pdf", "filepath": "KLE-CTIE-Events/Events_2019-20/E062.html"}, {"id": "E061", "title": "TiE Sharks \u2013 Pitch Master Class", "year": "2019-20", "date": "31-01-2020", "venue": "KLE-CTIE / TiECON Hubballi context", "organizer": "KLE-CTIE / TiE", "objective": "Improve pitching skills of startups shortlisted for TiE Sharks.\u200b", "participants_raw": "About 80 participants; around 45 startups", "participants_count": 80, "images": ["KLE-CTIE-Events/Events_2019-20/images/E061_a.jpg", "KLE-CTIE-Events/Events_2019-20/images/E061_b.jpg"], "pdf_filepath": "KLE-CTIE-Events/Events_2019-20/pdf/E061.pdf", "filepath": "KLE-CTIE-Events/Events_2019-20/E061.html"}, {"id": "E060", "title": "Two-day Workshop on Research, Technology & Innovation", "year": "2019-20", "date": "31-01-2020", "venue": "KLE Technological University", "organizer": "KLE-CTIE", "objective": "Train faculty on research, technology development, and innovation practices.\u200b", "participants_raw": "Over 40 faculty from 8 schools", "participants_count": 40, "images": ["KLE-CTIE-Events/Events_2019-20/images/E060_a.jpg", "KLE-CTIE-Events/Events_2019-20/images/E060_b.jpg"], "pdf_filepath": "KLE-CTIE-Events/Events_2019-20/pdf/E060.pdf", "filepath": "KLE-CTIE-Events/Events_2019-20/E060.html"}, {"id": "E059", "title": "Investor Meet in Mumbai with Wiezmann Forex", "year": "2019-20", "date": "29-01-2020", "venue": "Mumbai \u2013 Wiezmann Forex", "organizer": "KLE-CTIE / Wiezmann Forex", "objective": "Provide selected startups with opportunity to pitch in Mumbai.\u200b", "participants_raw": "Four startups", "participants_count": 0, "images": ["KLE-CTIE-Events/Events_2019-20/images/E059_a.jpg"], "pdf_filepath": "KLE-CTIE-Events/Events_2019-20/pdf/E059.pdf", "filepath": "KLE-CTIE-Events/Events_2019-20/E059.html"}, {"id": "E058", "title": "Investor Meet with Multiple Investors", "year": "2019-20", "date": "22-01-2020", "venue": "KLE-CTIE, Hubli", "organizer": "KLE-CTIE", "objective": "Enable startups to pitch to a panel of investors and gain support.\u200b", "participants_raw": "Not specified", "participants_count": 0, "images": ["KLE-CTIE-Events/Events_2019-20/images/E058_a.jpg", "KLE-CTIE-Events/Events_2019-20/images/E058_b.jpg"], "pdf_filepath": "KLE-CTIE-Events/Events_2019-20/pdf/E058.pdf", "filepath": "KLE-CTIE-Events/Events_2019-20/E058.html"}, {"id": "E057", "title": "Mentor Me \u2013 Pre-investor Pitch Screening with Mr. Anand Kadakol", "year": "2019-20", "date": "21-01-2020", "venue": "KLE-CTIE, Hubli", "organizer": "KLE-CTIE", "objective": "Prepare selected startups for investor meet next day.", "participants_raw": "Five startups", "participants_count": 0, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2019-20/pdf/E057.pdf", "filepath": "KLE-CTIE-Events/Events_2019-20/E057.html"}, {"id": "E056", "title": "Screening of Pequrel Microelectronics for Incubation", "year": "2019-20", "date": "21-01-2020", "venue": "KLE-CTIE, Hubli", "organizer": "KLE-CTIE", "objective": "Evaluate a new startup for incubation.\u200b", "participants_raw": "Not specified", "participants_count": 0, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2019-20/pdf/E056.pdf", "filepath": "KLE-CTIE-Events/Events_2019-20/E056.html"}, {"id": "E055", "title": "Mentor Me \u2013 Mentoring Session with Mr. Anand Kadakol", "year": "2019-20", "date": "17-01-2020", "venue": "KLE-CTIE, Hubli", "organizer": "KLE-CTIE", "objective": "Groom student startups and follow up with existing ones.", "participants_raw": "Six startups", "participants_count": 0, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2019-20/pdf/E055.pdf", "filepath": "KLE-CTIE-Events/Events_2019-20/E055.html"}, {"id": "E054", "title": "KLE-CTIE Board Meeting", "year": "2019-20", "date": "14-01-2020", "venue": "KLE-CTIE, Hubli", "organizer": "KLE-CTIE", "objective": "Review incubator progress and plans.\u200b", "participants_raw": "Not specified", "participants_count": 0, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2019-20/pdf/E054.pdf", "filepath": "KLE-CTIE-Events/Events_2019-20/E054.html"}, {"id": "E053", "title": "Mentor Me \u2013 Mentoring Session with Mr. Anand Kadakol", "year": "2019-20", "date": "14-01-2020", "venue": "KLE-CTIE, Hubli", "organizer": "KLE-CTIE", "objective": "Evaluate readiness of mature startups and encourage student startup registration.\u200b", "participants_raw": "Six startups", "participants_count": 0, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2019-20/pdf/E053.pdf", "filepath": "KLE-CTIE-Events/Events_2019-20/E053.html"}, {"id": "E052", "title": "Mentor Me \u2013 Strategy Discussion and Mentoring with Dr. Anant Koppar", "year": "2019-20", "date": "13-01-2020", "venue": "KLE-CTIE, Hubli", "organizer": "KLE-CTIE", "objective": "Discuss CTIE operations revamp and mentor startups.\u200b", "participants_raw": "Six startups (plus leadership meeting)", "participants_count": 0, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2019-20/pdf/E052.pdf", "filepath": "KLE-CTIE-Events/Events_2019-20/E052.html"}, {"id": "E051", "title": "Seminar by Fintel on Finance & Compliance", "year": "2019-20", "date": "10-01-2020", "venue": "KLE-CTIE, Hubli", "organizer": "KLE-CTIE", "objective": "Educate startups on loans, compliance, and financial documentation.\u200b", "participants_raw": "Not specified", "participants_count": 0, "images": ["KLE-CTIE-Events/Events_2019-20/images/E051_a.jpg", "KLE-CTIE-Events/Events_2019-20/images/E051_b.jpg"], "pdf_filepath": "KLE-CTIE-Events/Events_2019-20/pdf/E051.pdf", "filepath": "KLE-CTIE-Events/Events_2019-20/E051.html"}, {"id": "E050", "title": "Mentor Me \u2013 Mentoring Session with Mr. Anand Kadakol", "year": "2019-20", "date": "10-01-2020", "venue": "KLE-CTIE, Hubli", "organizer": "KLE-CTIE", "objective": "Introduce new startups to mentoring and explore value.", "participants_raw": "Six startups", "participants_count": 0, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2019-20/pdf/E050.pdf", "filepath": "KLE-CTIE-Events/Events_2019-20/E050.html"}, {"id": "E049", "title": "Mentor Me \u2013 Mentoring Session with Mr. Anand Kadakol", "year": "2019-20", "date": "07-01-2020", "venue": "KLE-CTIE, Hubli", "organizer": "KLE-CTIE", "objective": "Explore collaboration opportunities and collect startup updates.", "participants_raw": "Five startups", "participants_count": 0, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2019-20/pdf/E049.pdf", "filepath": "KLE-CTIE-Events/Events_2019-20/E049.html"}, {"id": "E048", "title": "Mentor Me \u2013 Mentoring Session with Mr. Anand Kadakol", "year": "2019-20", "date": "31-12-2019", "venue": "KLE-CTIE, Hubli", "organizer": "KLE-CTIE", "objective": "Debrief after investor meet and plan next steps.", "participants_raw": "Not specified", "participants_count": 0, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2019-20/pdf/E048.pdf", "filepath": "KLE-CTIE-Events/Events_2019-20/E048.html"}, {"id": "E047", "title": "Investors Meet with Mr. Timmanna Gouda C", "year": "2019-20", "date": "28-12-2019", "venue": "KLE-CTIE, Hubli", "organizer": "KLE-CTIE", "objective": "Enable selected startups to pitch to seed investor and gain networks.\u200b", "participants_raw": "Five startups", "participants_count": 0, "images": ["KLE-CTIE-Events/Events_2019-20/images/E047_a.jpg", "KLE-CTIE-Events/Events_2019-20/images/E047_b.jpg"], "pdf_filepath": "KLE-CTIE-Events/Events_2019-20/pdf/E047.pdf", "filepath": "KLE-CTIE-Events/Events_2019-20/E047.html"}, {"id": "E046", "title": "Mentor Me \u2013 Mentoring Session with Mr. Anand Kadakol", "year": "2019-20", "date": "27-12-2019", "venue": "KLE-CTIE, Hubli", "organizer": "KLE-CTIE", "objective": "Final pre-pitch for selected startups before investor visit.", "participants_raw": "Five startups", "participants_count": 0, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2019-20/pdf/E046.pdf", "filepath": "KLE-CTIE-Events/Events_2019-20/E046.html"}, {"id": "E045", "title": "Mentor Me \u2013 Mentoring Session with Mr. Anand Kadakol", "year": "2019-20", "date": "24-12-2019", "venue": "KLE-CTIE, Hubli", "organizer": "KLE-CTIE", "objective": "One-to-one pitch refinement with follow-up group pre-pitch.", "participants_raw": "Not specified", "participants_count": 0, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2019-20/pdf/E045.pdf", "filepath": "KLE-CTIE-Events/Events_2019-20/E045.html"}, {"id": "E044", "title": "Mentor Me \u2013 Mentoring Session with Mr. Anand Kadakol", "year": "2019-20", "date": "20-12-2019", "venue": "KLE-CTIE, Hubli", "organizer": "KLE-CTIE", "objective": "Help startups internalize effective pitching by example.", "participants_raw": "Not specified", "participants_count": 0, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2019-20/pdf/E044.pdf", "filepath": "KLE-CTIE-Events/Events_2019-20/E044.html"}, {"id": "E043", "title": "Mentor Me \u2013 Mentoring Session with Mr. Anand Kadakol", "year": "2019-20", "date": "17-12-2019", "venue": "KLE-CTIE, Hubli", "organizer": "KLE-CTIE", "objective": "Further refine pitches and articulation.", "participants_raw": "Not specified", "participants_count": 0, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2019-20/pdf/E043.pdf", "filepath": "KLE-CTIE-Events/Events_2019-20/E043.html"}, {"id": "E042", "title": "Mentor Me \u2013 Mentoring Session with Mr. Anand Kadakol", "year": "2019-20", "date": "13-12-2019", "venue": "KLE-CTIE, Hubli", "organizer": "KLE-CTIE", "objective": "Conduct pre-pitch for potential investor-ready startups.\u200b", "participants_raw": "Not specified (potential startups)", "participants_count": 0, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2019-20/pdf/E042.pdf", "filepath": "KLE-CTIE-Events/Events_2019-20/E042.html"}, {"id": "E041", "title": "Mentor Me \u2013 Mentoring Session with Dr. Anant Koppar and Visitor", "year": "2019-20", "date": "13-12-2019", "venue": "KLE-CTIE, Hubli and KLE Tech Park", "organizer": "KLE-CTIE", "objective": "Expose visitor to CTIE startups and explore business proposals.\u200b", "participants_raw": "Not specified", "participants_count": 0, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2019-20/pdf/E041.pdf", "filepath": "KLE-CTIE-Events/Events_2019-20/E041.html"}, {"id": "E040", "title": "Mentor Me \u2013 Mentoring Session with Mr. Anand Kadakol", "year": "2019-20", "date": "10-12-2019", "venue": "KLE-CTIE, Hubli", "organizer": "KLE-CTIE", "objective": "Prepare startups through pre-pitch sessions for upcoming investor meetings.\u200b", "participants_raw": "Four startups", "participants_count": 0, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2019-20/pdf/E040.pdf", "filepath": "KLE-CTIE-Events/Events_2019-20/E040.html"}, {"id": "E039", "title": "Chai Pe Charcha with CTIE Startups", "year": "2019-20", "date": "07-12-2019", "venue": "KLE-CTIE, Hubli", "organizer": "KLE-CTIE", "objective": "Strengthen inter-startup relationships and team-level networking.\u200b", "participants_raw": "Not specified", "participants_count": 0, "images": ["KLE-CTIE-Events/Events_2019-20/images/E039_a.jpg", "KLE-CTIE-Events/Events_2019-20/images/E039_b.jpg"], "pdf_filepath": "KLE-CTIE-Events/Events_2019-20/pdf/E039.pdf", "filepath": "KLE-CTIE-Events/Events_2019-20/E039.html"}, {"id": "E038", "title": "Mentor Me \u2013 Mentoring Session with Mr. Anand Kadakol", "year": "2019-20", "date": "06-12-2019", "venue": "KLE-CTIE, Hubli", "organizer": "KLE-CTIE", "objective": "Continue mentoring for investor-ready startups and student teams.\u200b", "participants_raw": "Five startups", "participants_count": 0, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2019-20/pdf/E038.pdf", "filepath": "KLE-CTIE-Events/Events_2019-20/E038.html"}, {"id": "E037", "title": "Fundamentals of Business, Venture Capital Investment & IP Workshop", "year": "2019-20", "date": "05-12-2019", "venue": "KLE Technological University", "organizer": "KLE-CTIE", "objective": "Introduce fundamentals of business formation, venture funding, and IP protection.\u200b", "participants_raw": "Not specified", "participants_count": 0, "images": ["KLE-CTIE-Events/Events_2019-20/images/E037_a.jpg", "KLE-CTIE-Events/Events_2019-20/images/E037_b.jpg"], "pdf_filepath": "KLE-CTIE-Events/Events_2019-20/pdf/E037.pdf", "filepath": "KLE-CTIE-Events/Events_2019-20/E037.html"}, {"id": "E036", "title": "Lean Startup and Product Design Workshop", "year": "2019-20", "date": "29-11-2019", "venue": "KLE Technological University", "organizer": "KLE-CTIE", "objective": "Provide experiential learning on innovation tools, problem discovery, and MVP design.\u200b", "participants_raw": "Not specified", "participants_count": 0, "images": ["KLE-CTIE-Events/Events_2019-20/images/E036_a.jpg", "KLE-CTIE-Events/Events_2019-20/images/E036_b.jpg", "KLE-CTIE-Events/Events_2019-20/images/E036_c.jpg", "KLE-CTIE-Events/Events_2019-20/images/E036_d.jpg"], "pdf_filepath": "KLE-CTIE-Events/Events_2019-20/pdf/E036.pdf", "filepath": "KLE-CTIE-Events/Events_2019-20/E036.html"}, {"id": "E035", "title": "IIC 2nd Quarter Council Meeting", "year": "2019-20", "date": "28-11-2019", "venue": "KLE Technological University", "organizer": "KLE Technological University IIC Council", "objective": "Review event reporting and plan upcoming IIC activities.\u200b", "participants_raw": "Not specified", "participants_count": 0, "images": ["KLE-CTIE-Events/Events_2019-20/images/E035_a.jpg", "KLE-CTIE-Events/Events_2019-20/images/E035_b.jpg"], "pdf_filepath": "KLE-CTIE-Events/Events_2019-20/pdf/E035.pdf", "filepath": "KLE-CTIE-Events/Events_2019-20/E035.html"}, {"id": "E034", "title": "Mentor Me \u2013 Mentoring Session with Mr. Anand Kadakol", "year": "2019-20", "date": "28-11-2019", "venue": "KLE-CTIE, Hubli", "organizer": "KLE-CTIE", "objective": "Mentor existing and new student startup while continuing regular interactions.\u200b", "participants_raw": "Six startups", "participants_count": 0, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2019-20/pdf/E034.pdf", "filepath": "KLE-CTIE-Events/Events_2019-20/E034.html"}, {"id": "E033", "title": "Mentor Me \u2013 Mentoring Session with Mr. Anand Kadakol", "year": "2019-20", "date": "26-11-2019", "venue": "KLE-CTIE, Hubli", "organizer": "KLE-CTIE", "objective": "Advance investor interactions and support mature startups.", "participants_raw": "Seven startups", "participants_count": 0, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2019-20/pdf/E033.pdf", "filepath": "KLE-CTIE-Events/Events_2019-20/E033.html"}, {"id": "E032", "title": "Mentor Me \u2013 Mentoring Session with Mr. Anand Kadakol", "year": "2019-20", "date": "22-11-2019", "venue": "KLE-CTIE, Hubli", "organizer": "KLE-CTIE", "objective": "Continue mentoring and pitch refinement.\u200b", "participants_raw": "Six startups", "participants_count": 0, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2019-20/pdf/E032.pdf", "filepath": "KLE-CTIE-Events/Events_2019-20/E032.html"}, {"id": "E031", "title": "Mentor Me \u2013 Mentoring Session with Mr. Anand Kadakol", "year": "2019-20", "date": "19-11-2019", "venue": "KLE-CTIE, Hubli", "organizer": "KLE-CTIE", "objective": "Follow-up mentoring integrating valuation learning.\u200b", "participants_raw": "Four startups", "participants_count": 0, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2019-20/pdf/E031.pdf", "filepath": "KLE-CTIE-Events/Events_2019-20/E031.html"}, {"id": "E030", "title": "Valuation Method Workshop", "year": "2019-20", "date": "19-11-2019", "venue": "KLE-CTIE, Hubli", "organizer": "KLE-CTIE", "objective": "Introduce startup valuation models and help founders compute valuations.\u200b", "participants_raw": "Not specified", "participants_count": 0, "images": ["KLE-CTIE-Events/Events_2019-20/images/E030_a.jpg", "KLE-CTIE-Events/Events_2019-20/images/E030_b.jpg"], "pdf_filepath": "KLE-CTIE-Events/Events_2019-20/pdf/E030.pdf", "filepath": "KLE-CTIE-Events/Events_2019-20/E030.html"}, {"id": "E029", "title": "Chai Pe Charcha with CTIE Startups", "year": "2019-20", "date": "16-11-2019", "venue": "KLE-CTIE, Hubli", "organizer": "KLE-CTIE", "objective": "Foster informal networking and collaboration among startups.\u200b", "participants_raw": "Not specified", "participants_count": 0, "images": ["KLE-CTIE-Events/Events_2019-20/images/E029_a.jpg", "KLE-CTIE-Events/Events_2019-20/images/E029_b.jpg"], "pdf_filepath": "KLE-CTIE-Events/Events_2019-20/pdf/E029.pdf", "filepath": "KLE-CTIE-Events/Events_2019-20/E029.html"}, {"id": "E028", "title": "Mentor Me \u2013 Mentoring Session with Mr. Anand Kadakol", "year": "2019-20", "date": "15-11-2019", "venue": "KLE-CTIE, Hubli", "organizer": "KLE-CTIE", "objective": "Support multiple startups approaching investor readiness.\u200b", "participants_raw": "Eight startups", "participants_count": 0, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2019-20/pdf/E028.pdf", "filepath": "KLE-CTIE-Events/Events_2019-20/E028.html"}, {"id": "E027", "title": "Mentor Me \u2013 Mentoring Session with Mr. Anand Kadakol", "year": "2019-20", "date": "12-11-2019", "venue": "KLE-CTIE, Hubli", "organizer": "KLE-CTIE", "objective": "Improve articulation of business proposals and involve student startups.\u200b", "participants_raw": "Seven startups", "participants_count": 0, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2019-20/pdf/E027.pdf", "filepath": "KLE-CTIE-Events/Events_2019-20/E027.html"}, {"id": "E026", "title": "Mentor Me \u2013 Mentoring Session with Mr. Anand Kadakol", "year": "2019-20", "date": "08-11-2019", "venue": "KLE-CTIE, Hubli", "organizer": "KLE-CTIE", "objective": "Prepare startups for funding and strategic decisions.\u200b", "participants_raw": "Seven startups", "participants_count": 0, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2019-20/pdf/E026.pdf", "filepath": "KLE-CTIE-Events/Events_2019-20/E026.html"}, {"id": "E025", "title": "Mentor Me \u2013 Mentoring Session with Dr. Anant Koppar", "year": "2019-20", "date": "07-11-2019", "venue": "KLE-CTIE, Hubli", "organizer": "KLE-CTIE", "objective": "Monthly mentoring visit to guide key startups.\u200b", "participants_raw": "Five startups", "participants_count": 0, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2019-20/pdf/E025.pdf", "filepath": "KLE-CTIE-Events/Events_2019-20/E025.html"}, {"id": "E024", "title": "Mentor Me \u2013 Mentoring Session with Mr. Anand Kadakol", "year": "2019-20", "date": "05-11-2019", "venue": "KLE-CTIE, Hubli", "organizer": "KLE-CTIE", "objective": "Continue structured mentoring twice a week.", "participants_raw": "Four startups", "participants_count": 0, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2019-20/pdf/E024.pdf", "filepath": "KLE-CTIE-Events/Events_2019-20/E024.html"}, {"id": "E023", "title": "Mentor Me \u2013 Mentoring Session with Mr. Anand Kadakol", "year": "2019-20", "date": "31-10-2019", "venue": "KLE-CTIE, Hubli", "organizer": "KLE-CTIE", "objective": "Advance startup growth plans and assign tasks.", "participants_raw": "Five startups", "participants_count": 0, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2019-20/pdf/E023.pdf", "filepath": "KLE-CTIE-Events/Events_2019-20/E023.html"}, {"id": "E022", "title": "Mentor Me \u2013 Mentoring Session with Mr. Anand Kadakol", "year": "2019-20", "date": "26-10-2019", "venue": "KLE-CTIE, Hubli", "organizer": "KLE-CTIE", "objective": "Provide deep-dive mentoring with extended sessions.\u200b", "participants_raw": "Three startups", "participants_count": 0, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2019-20/pdf/E022.pdf", "filepath": "KLE-CTIE-Events/Events_2019-20/E022.html"}, {"id": "E021", "title": "Entrepreneur\u2019s Life and Crossroad \u2013 Talk by Mr. Vivek Pawar", "year": "2019-20", "date": "25-10-2019", "venue": "KLE-CTIE, Hubli", "organizer": "KLE-CTIE", "objective": "Inspire participants with a Tier-2 city entrepreneurial success story.\u200b", "participants_raw": "Not specified", "participants_count": 0, "images": ["KLE-CTIE-Events/Events_2019-20/images/E021_a.jpg", "KLE-CTIE-Events/Events_2019-20/images/E021_b.jpg"], "pdf_filepath": "KLE-CTIE-Events/Events_2019-20/pdf/E021.pdf", "filepath": "KLE-CTIE-Events/Events_2019-20/E021.html"}, {"id": "E020", "title": "Innovator\u2019s Life and Crossroad \u2013 Talk by Mr. Anand Kadakol", "year": "2019-20", "date": "25-10-2019", "venue": "KLE-CTIE, Hubli", "organizer": "KLE-CTIE", "objective": "Share personal innovation journey and mindset with participants.\u200b", "participants_raw": "Not specified", "participants_count": 0, "images": ["KLE-CTIE-Events/Events_2019-20/images/E020_a.jpg", "KLE-CTIE-Events/Events_2019-20/images/E020_b.jpg"], "pdf_filepath": "KLE-CTIE-Events/Events_2019-20/pdf/E020.pdf", "filepath": "KLE-CTIE-Events/Events_2019-20/E020.html"}, {"id": "E019", "title": "PUPA Exhibition 2019", "year": "2019-20", "date": "19-10-2019", "venue": "KLE Technological University", "organizer": "MiB / KLE-CTIE", "objective": "Showcase student-built products and encourage entrepreneurial mindset.\u200b", "participants_raw": "220 product ideas", "participants_count": 220, "images": ["KLE-CTIE-Events/Events_2019-20/images/E019_a.jpg", "KLE-CTIE-Events/Events_2019-20/images/E019_b.jpg"], "pdf_filepath": "KLE-CTIE-Events/Events_2019-20/pdf/E019.pdf", "filepath": "KLE-CTIE-Events/Events_2019-20/E019.html"}, {"id": "E018", "title": "Mentor Me \u2013 Mentoring Session with Mr. Anand Kadakol", "year": "2019-20", "date": "15-10-2019", "venue": "KLE-CTIE, Hubli", "organizer": "KLE-CTIE", "objective": "Begin one-to-one mentoring cycle with new mentor.\u200b", "participants_raw": "Six startups", "participants_count": 0, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2019-20/pdf/E018.pdf", "filepath": "KLE-CTIE-Events/Events_2019-20/E018.html"}, {"id": "E017", "title": "Essay Competition \u2013 National Innovation Day", "year": "2019-20", "date": "12-10-2019", "venue": "Departments and university level", "organizer": "KLE Technological University / IIC", "objective": "Promote thinking on entrepreneurship, innovation, and responsible engineering.\u200b", "participants_raw": "Two winners per department; three final university winners", "participants_count": 0, "images": ["KLE-CTIE-Events/Events_2019-20/images/E017_a.jpg", "KLE-CTIE-Events/Events_2019-20/images/E017_b.jpg"], "pdf_filepath": "KLE-CTIE-Events/Events_2019-20/pdf/E017.pdf", "filepath": "KLE-CTIE-Events/Events_2019-20/E017.html"}, {"id": "E016", "title": "Investor Visit \u2013 Mr. Arun Bellary", "year": "2019-20", "date": "01-10-2019", "venue": "KLE-CTIE, Hubli", "organizer": "KLE-CTIE", "objective": "Explore potential funding and collaboration for CTIE startups from Tier-2 focused investor.\u200b", "participants_raw": "Not specified (multiple startups)", "participants_count": 0, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2019-20/pdf/E016.pdf", "filepath": "KLE-CTIE-Events/Events_2019-20/E016.html"}, {"id": "E015", "title": "Address to Startups by Mr. Anand Kadakol", "year": "2019-20", "date": "26-09-2019", "venue": "KLE-CTIE, Hubli", "organizer": "KLE-CTIE", "objective": "Share experiences in fintech innovation and motivate startups.\u200b", "participants_raw": "Not specified", "participants_count": 0, "images": ["KLE-CTIE-Events/Events_2019-20/images/E015_a.jpg", "KLE-CTIE-Events/Events_2019-20/images/E015_b.jpg"], "pdf_filepath": "KLE-CTIE-Events/Events_2019-20/pdf/E015.pdf", "filepath": "KLE-CTIE-Events/Events_2019-20/E015.html"}, {"id": "E014", "title": "Mentor Me \u2013 Mentoring Session with Dr. Anant Koppar", "year": "2019-20", "date": "25-09-2019", "venue": "KLE-CTIE, Hubli", "organizer": "KLE-CTIE", "objective": "Provide tailored guidance and connections for select startups.\u200b", "participants_raw": "Six startups", "participants_count": 0, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2019-20/pdf/E014.pdf", "filepath": "KLE-CTIE-Events/Events_2019-20/E014.html"}, {"id": "E013", "title": "Electronics Enabling Lab (EEL) Inaugural", "year": "2019-20", "date": "21-09-2019", "venue": "KLE-CTIE, Hubli", "organizer": "KLE-CTIE / DST", "objective": "Launch state-of-the-art lab for RF, thermal, vibration testing and antenna measurements.\u200b", "participants_raw": "Not specified", "participants_count": 0, "images": ["KLE-CTIE-Events/Events_2019-20/images/E013_a.jpg", "KLE-CTIE-Events/Events_2019-20/images/E013_b.jpg"], "pdf_filepath": "KLE-CTIE-Events/Events_2019-20/pdf/E013.pdf", "filepath": "KLE-CTIE-Events/Events_2019-20/E013.html"}, {"id": "E012", "title": "IIC Council Meeting \u2013 Quarter Review", "year": "2019-20", "date": "17-09-2019", "venue": "Old Senate Hall, KLE Tech", "organizer": "KLE Technological University IIC Council", "objective": "Plan ARIIA and IIC portal data entry and event reporting.\u200b", "participants_raw": "Not specified (department reps)", "participants_count": 0, "images": ["KLE-CTIE-Events/Events_2019-20/images/E012_a.jpg", "KLE-CTIE-Events/Events_2019-20/images/E012_b.jpg"], "pdf_filepath": "KLE-CTIE-Events/Events_2019-20/pdf/E012.pdf", "filepath": "KLE-CTIE-Events/Events_2019-20/E012.html"}, {"id": "E011", "title": "Visit by Mount Carmel College to CTIE", "year": "2019-20", "date": "September", "venue": "KLE-CTIE, Hubli", "organizer": "KLE-CTIE", "objective": "Showcase CTIE incubation model and facilities to visiting institution.\u200b", "participants_raw": "30 students and 6 faculty", "participants_count": 30, "images": ["KLE-CTIE-Events/Events_2019-20/images/E011_a.jpg", "KLE-CTIE-Events/Events_2019-20/images/E011_b.jpg"], "pdf_filepath": "KLE-CTIE-Events/Events_2019-20/pdf/E011.pdf", "filepath": "KLE-CTIE-Events/Events_2019-20/E011.html"}, {"id": "E010", "title": "PUPA Orientation Program", "year": "2019-20", "date": "04-09-2019", "venue": "KLE Technological University", "organizer": "MiB / KLE-CTIE", "objective": "Introduce PUPA concept and process for students building products with seed funding.\u200b", "participants_raw": "Not specified (PUPA applicants)", "participants_count": 0, "images": ["KLE-CTIE-Events/Events_2019-20/images/E010_a.jpg", "KLE-CTIE-Events/Events_2019-20/images/E010_b.jpg"], "pdf_filepath": "KLE-CTIE-Events/Events_2019-20/pdf/E010.pdf", "filepath": "KLE-CTIE-Events/Events_2019-20/E010.html"}, {"id": "E009", "title": "MiB Outbound Program", "year": "2019-20", "date": "25-08-2019", "venue": "ECO Village, Dharwad", "organizer": "Make in BVB (MiB)", "objective": "Team-building and grooming of new MiB members for event organization.\u200b", "participants_raw": "55 students", "participants_count": 55, "images": ["KLE-CTIE-Events/Events_2019-20/images/E009_a.jpg", "KLE-CTIE-Events/Events_2019-20/images/E009_b.jpg"], "pdf_filepath": "KLE-CTIE-Events/Events_2019-20/pdf/E009.pdf", "filepath": "KLE-CTIE-Events/Events_2019-20/E009.html"}, {"id": "E008", "title": "Live Stream of HRD Minister\u2019s Talk", "year": "2019-20", "date": "22-08-2019", "venue": "KLE Technological University", "organizer": "KLE Technological University / IIC", "objective": "Expose students to national-level views on education and innovation as per IIC mandate.\u200b", "participants_raw": "Not specified (institution-wide activity)", "participants_count": 0, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2019-20/pdf/E008.pdf", "filepath": "KLE-CTIE-Events/Events_2019-20/E008.html"}, {"id": "E007", "title": "Mentor Me \u2013 Mentoring Session by Dr. Anant Koppar", "year": "2019-20", "date": "07-08-2019", "venue": "KLE-CTIE, Hubli", "organizer": "KLE-CTIE", "objective": "Support incubated and student startups, especially those applying to national innovation contests.\u200b", "participants_raw": "Eight startups (including four student startups)", "participants_count": 0, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2019-20/pdf/E007.pdf", "filepath": "KLE-CTIE-Events/Events_2019-20/E007.html"}, {"id": "E006", "title": "Sales & Marketing Workshop (Repeat)", "year": "2019-20", "date": "07-06-2019", "venue": "KLE-CTIE, Hubli", "organizer": "KLE-CTIE with DF Startups", "objective": "Provide missed startups and partner incubator companies another chance to attend sales and marketing training.\u200b", "participants_raw": "Not specified (good participation)", "participants_count": 0, "images": ["KLE-CTIE-Events/Events_2019-20/images/E006_a.jpg", "KLE-CTIE-Events/Events_2019-20/images/E006_b.jpg"], "pdf_filepath": "KLE-CTIE-Events/Events_2019-20/pdf/E006.pdf", "filepath": "KLE-CTIE-Events/Events_2019-20/E006.html"}, {"id": "E005", "title": "Butterfly \u2013 B-plan Pitching Competition", "year": "2019-20", "date": "31-05-2019", "venue": "KLE Technological University campus", "organizer": "KLE-CTIE / MiB", "objective": "Encourage students to pitch project ideas they wish to pursue and compete for prizes.\u200b", "participants_raw": "Not specified (multiple teams)", "participants_count": 0, "images": ["KLE-CTIE-Events/Events_2019-20/images/E005_a.jpg", "KLE-CTIE-Events/Events_2019-20/images/E005_b.jpg"], "pdf_filepath": "KLE-CTIE-Events/Events_2019-20/pdf/E005.pdf", "filepath": "KLE-CTIE-Events/Events_2019-20/E005.html"}, {"id": "E004", "title": "Mentor Me \u2013 Mentoring Session by Dr. Anant Koppar", "year": "2019-20", "date": "28-05-2019", "venue": "KLE-CTIE, Hubli", "organizer": "KLE-CTIE", "objective": "Review startup progress and tasks, and provide further guidance.\u200b", "participants_raw": "Not specified (several startups)", "participants_count": 0, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2019-20/pdf/E004.pdf", "filepath": "KLE-CTIE-Events/Events_2019-20/E004.html"}, {"id": "E003", "title": "Sales & Marketing Workshop", "year": "2019-20", "date": "25-05-2019", "venue": "KLE-CTIE, Hubli", "organizer": "KLE-CTIE", "objective": "Build sales and marketing capabilities for incubated startups.\u200b", "participants_raw": "Not specified (good participation mentioned)", "participants_count": 0, "images": ["KLE-CTIE-Events/Events_2019-20/images/E003_a.jpg", "KLE-CTIE-Events/Events_2019-20/images/E003_b.jpg"], "pdf_filepath": "KLE-CTIE-Events/Events_2019-20/pdf/E003.pdf", "filepath": "KLE-CTIE-Events/Events_2019-20/E003.html"}, {"id": "E002", "title": "Mentor Me \u2013 Mentoring Session by Dr. Anant Koppar", "year": "2019-20", "date": "15-05-2019", "venue": "KLE-CTIE, Hubli", "organizer": "KLE-CTIE", "objective": "Continued mentoring support to refine business needs and identify areas where mentor can help.\u200b", "participants_raw": "Not specified (multiple startups)", "participants_count": 0, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2019-20/pdf/E002.pdf", "filepath": "KLE-CTIE-Events/Events_2019-20/E002.html"}, {"id": "E001", "title": "Mentor Me \u2013 Mentoring Session by Dr. Anant Koppar", "year": "2019-20", "date": "11-04-2019", "venue": "KLE Technological University, Hubli", "organizer": "KLE-CTIE", "objective": "Focused one-to-one mentoring for incubated and student startups to refine plans and connect to mentor network.\u200b", "participants_raw": "8\u201310 startups", "participants_count": 8, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2019-20/pdf/E001.pdf", "filepath": "KLE-CTIE-Events/Events_2019-20/E001.html"}, {"id": "E1718_27", "title": "E-Summit 2018 \u2013 Celebration of Entrepreneurship", "year": "2017-18", "date": "08-03-2018", "venue": "KLE Tech campus", "organizer": "KLE-CTIE", "objective": "Offer large-scale inspiration, learning and pitching opportunities.\u200b", "participants_raw": "1400+ exhibition footfalls; large event participation", "participants_count": 1400, "images": ["KLE-CTIE-Events/Events_2017-18/images/E1718_27_a.jpg", "KLE-CTIE-Events/Events_2017-18/images/E1718_27_b.jpg", "KLE-CTIE-Events/Events_2017-18/images/E1718_27_c.jpg", "KLE-CTIE-Events/Events_2017-18/images/E1718_27_d.jpg"], "pdf_filepath": "KLE-CTIE-Events/Events_2017-18/pdf/E1718_27.pdf", "filepath": "KLE-CTIE-Events/Events_2017-18/E1718_27.html"}, {"id": "E1718_26", "title": "Mentor Me Program \u2013 WEEWF & Borewell Mart", "year": "2017-18", "date": "March", "venue": "KLE-CTIE", "organizer": "KLE-CTIE", "objective": "Evaluate two companies seeking incubation and provide feedback.\u200b", "participants_raw": "2 companies", "participants_count": 2, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2017-18/pdf/E1718_26.pdf", "filepath": "KLE-CTIE-Events/Events_2017-18/E1718_26.html"}, {"id": "E1718_25", "title": "Creativity Workshop for Minor in Entrepreneurship Students", "year": "2017-18", "date": "03-03-2018", "venue": "Senate Hall, R.H. Kulkarni Building", "organizer": "KLE-CTIE", "objective": "Release creative potential and strengthen right-brain thinking for minor students.\u200b", "participants_raw": "Not specified", "participants_count": 0, "images": ["KLE-CTIE-Events/Events_2017-18/images/E1718_25_a.jpg", "KLE-CTIE-Events/Events_2017-18/images/E1718_25_b.jpg", "KLE-CTIE-Events/Events_2017-18/images/E1718_25_c.jpg", "KLE-CTIE-Events/Events_2017-18/images/E1718_25_d.jpg"], "pdf_filepath": "KLE-CTIE-Events/Events_2017-18/pdf/E1718_25.pdf", "filepath": "KLE-CTIE-Events/Events_2017-18/E1718_25.html"}, {"id": "E1718_24", "title": "Design Thinking Workshop", "year": "2017-18", "date": "18-02-2018", "venue": "R.H. Kulkarni Building, LHC Senate Hall", "organizer": "KLE-CTIE", "objective": "Introduce design thinking and multi-stakeholder problem solving to startup teams.\u200b", "participants_raw": "20 participants", "participants_count": 20, "images": ["KLE-CTIE-Events/Events_2017-18/images/E1718_24_a.jpg", "KLE-CTIE-Events/Events_2017-18/images/E1718_24_b.jpg", "KLE-CTIE-Events/Events_2017-18/images/E1718_24_c.jpg", "KLE-CTIE-Events/Events_2017-18/images/E1718_24_d.jpg"], "pdf_filepath": "KLE-CTIE-Events/Events_2017-18/pdf/E1718_24.pdf", "filepath": "KLE-CTIE-Events/Events_2017-18/E1718_24.html"}, {"id": "E1718_23", "title": "Intel Ideation Camp 2018", "year": "2017-18", "date": "14-02-2018", "venue": "KLE Tech campus", "organizer": "MiB / KLE-CTIE with Intel", "objective": "Train students in structured ideation and problem framing.\u200b", "participants_raw": "~170 applicants; 70 selected (text mentions 70; header \u201c72\u201d)", "participants_count": 170, "images": ["KLE-CTIE-Events/Events_2017-18/images/E1718_23_a.jpg", "KLE-CTIE-Events/Events_2017-18/images/E1718_23_b.jpg"], "pdf_filepath": "KLE-CTIE-Events/Events_2017-18/pdf/E1718_23.pdf", "filepath": "KLE-CTIE-Events/Events_2017-18/E1718_23.html"}, {"id": "E1718_22", "title": "Chai Pe Charcha \u2013 Informal Mentoring Sessions", "year": "2017-18", "date": "Weekly", "venue": "KLE-CTIE", "organizer": "KLE-CTIE", "objective": "Improve communication and soft skills through informal gatherings.\u200b", "participants_raw": "About 23 participants weekly", "participants_count": 23, "images": ["KLE-CTIE-Events/Events_2017-18/images/E1718_22_a.jpg", "KLE-CTIE-Events/Events_2017-18/images/E1718_22_b.jpg"], "pdf_filepath": "KLE-CTIE-Events/Events_2017-18/pdf/E1718_22.pdf", "filepath": "KLE-CTIE-Events/Events_2017-18/E1718_22.html"}, {"id": "E1718_21", "title": "Startup Talk \u2013 Internal Challenges & Peer Support", "year": "2017-18", "date": "30-01-2018", "venue": "KLE-CTIE", "organizer": "KLE-CTIE", "objective": "Continue peer discussion on customer education and mindset change.\u200b", "participants_raw": "Multiple founders", "participants_count": 0, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2017-18/pdf/E1718_21.pdf", "filepath": "KLE-CTIE-Events/Events_2017-18/E1718_21.html"}, {"id": "E1718_20", "title": "Startup Talk \u2013 Challenges & Solutions Roundtable", "year": "2017-18", "date": "29-12-2017", "venue": "KLE-CTIE", "organizer": "KLE-CTIE", "objective": "Discuss challenges of multiple startups and suggest practical solutions.\u200b", "participants_raw": "Multiple startups (NETRA, GDV, SkyKrafts, Coolins, Volt10, etc.)", "participants_count": 10, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2017-18/pdf/E1718_20.pdf", "filepath": "KLE-CTIE-Events/Events_2017-18/E1718_20.html"}, {"id": "E1718_19", "title": "Mentor Me Program \u2013 Solar Powered Computers", "year": "2017-18", "date": "December", "venue": "KLE-CTIE", "organizer": "KLE-CTIE", "objective": "Evaluate Volt10 Technologies for incubation.\u200b", "participants_raw": "1 startup", "participants_count": 1, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2017-18/pdf/E1718_19.pdf", "filepath": "KLE-CTIE-Events/Events_2017-18/E1718_19.html"}, {"id": "E1718_18", "title": "Student Exchange Program 2017 \u2013 Hubli Edition", "year": "2017-18", "date": "29-12-2017", "venue": "KLE Tech campus", "organizer": "KLE-CTIE with UML and partners", "objective": "Deliver multi-disciplinary, multi-cultural course on entrepreneurship and innovation.\u200b", "participants_raw": "150 students from 8 countries (for 2017 series overall)", "participants_count": 150, "images": ["KLE-CTIE-Events/Events_2017-18/images/E1718_18_a.jpg", "KLE-CTIE-Events/Events_2017-18/images/E1718_18_b.jpg"], "pdf_filepath": "KLE-CTIE-Events/Events_2017-18/pdf/E1718_18.pdf", "filepath": "KLE-CTIE-Events/Events_2017-18/E1718_18.html"}, {"id": "E1718_17", "title": "PUPA 2017 \u2013 Student Product & Entrepreneurship Event", "year": "2017-18", "date": "October", "venue": "KLE Tech campus", "organizer": "MiB / KLE-CTIE", "objective": "Provide accelerated entrepreneurial experience with real product build and sales.\u200b", "participants_raw": "Over 280 products; very high participation (multi-city)", "participants_count": 0, "images": ["KLE-CTIE-Events/Events_2017-18/images/E1718_17_a.jpg", "KLE-CTIE-Events/Events_2017-18/images/E1718_17_b.jpg", "KLE-CTIE-Events/Events_2017-18/images/E1718_17_c.jpg", "KLE-CTIE-Events/Events_2017-18/images/E1718_17_d.jpg"], "pdf_filepath": "KLE-CTIE-Events/Events_2017-18/pdf/E1718_17.pdf", "filepath": "KLE-CTIE-Events/Events_2017-18/E1718_17.html"}, {"id": "E1718_16", "title": "Startups/Incubatees Internal Meeting \u2013 Challenge Sharing", "year": "2017-18", "date": "29-09-2017", "venue": "KLE-CTIE", "organizer": "KLE-CTIE", "objective": "Identify common challenges across startups and explore solutions.\u200b", "participants_raw": "20 startups", "participants_count": 20, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2017-18/pdf/E1718_16.pdf", "filepath": "KLE-CTIE-Events/Events_2017-18/E1718_16.html"}, {"id": "E1718_15", "title": "Second KLE-CTIE Board of Members Meeting", "year": "2017-18", "date": "29-08-2017", "venue": "KLE Tech campus", "organizer": "KLE-CTIE", "objective": "Set roadmap for second half of the year and discuss welfare of startups and student activities.\u200b", "participants_raw": "Not specified", "participants_count": 0, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2017-18/pdf/E1718_15.pdf", "filepath": "KLE-CTIE-Events/Events_2017-18/E1718_15.html"}, {"id": "E1718_14", "title": "Elevate 100 \u2013 Final Round Participation & Winners", "year": "2017-18", "date": "29-08-2017", "venue": "Bangalore", "organizer": "Dept. of IT & BT, GoK with KLE-CTIE startups", "objective": "Compete for state seed funding under Elevate 100.\u200b", "participants_raw": "260 finalists statewide; 5 CTIE startups pitched; 3 CTIE winners", "participants_count": 260, "images": ["KLE-CTIE-Events/Events_2017-18/images/E1718_14_a.jpg", "KLE-CTIE-Events/Events_2017-18/images/E1718_14_b.jpg"], "pdf_filepath": "KLE-CTIE-Events/Events_2017-18/pdf/E1718_14.pdf", "filepath": "KLE-CTIE-Events/Events_2017-18/E1718_14.html"}, {"id": "E1718_13", "title": "Launch of \u201cNext Big Idea\u201d Contest \u2013 Zone Startups", "year": "2017-18", "date": "23-08-2017", "venue": "KLE Tech University", "organizer": "Zone Startups with KLE-CTIE", "objective": "Launch regional round of Next Big Idea contest and discuss global entrepreneurship.\u200b", "participants_raw": "45 participants", "participants_count": 45, "images": ["KLE-CTIE-Events/Events_2017-18/images/E1718_13_a.jpg", "KLE-CTIE-Events/Events_2017-18/images/E1718_13_b.jpg"], "pdf_filepath": "KLE-CTIE-Events/Events_2017-18/pdf/E1718_13.pdf", "filepath": "KLE-CTIE-Events/Events_2017-18/E1718_13.html"}, {"id": "E1718_12", "title": "Business Plan Pitching Rehearsal for Elevate 100 \u2013 Final Round", "year": "2017-18", "date": "23-08-2017", "venue": "KLE-CTIE", "organizer": "KLE-CTIE", "objective": "Refine pitches of CTIE startups shortlisted for Elevate 100 finals.\u200b", "participants_raw": "5 startups selected for finals; 4 presented during rehearsal", "participants_count": 5, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2017-18/pdf/E1718_12.pdf", "filepath": "KLE-CTIE-Events/Events_2017-18/E1718_12.html"}, {"id": "E1718_11", "title": "KLE-CTIE Model Presentation to MeitY & NCR Institutions", "year": "2017-18", "date": "10-08-2017", "venue": "Electronics Niketan, New Delhi", "organizer": "KLE-CTIE with IESA & MeitY", "objective": "Showcase CTIE incubation model to MeitY and NCR universities.\u200b", "participants_raw": "Over two dozen universities and engineering colleges", "participants_count": 0, "images": ["KLE-CTIE-Events/Events_2017-18/images/E1718_11_a.jpg", "KLE-CTIE-Events/Events_2017-18/images/E1718_11_b.jpg"], "pdf_filepath": "KLE-CTIE-Events/Events_2017-18/pdf/E1718_11.pdf", "filepath": "KLE-CTIE-Events/Events_2017-18/E1718_11.html"}, {"id": "E1718_10", "title": "Business Plan Pitching Rehearsal for Elevate 100 \u2013 Round 1", "year": "2017-18", "date": "29-07-2017", "venue": "KLE-CTIE", "organizer": "KLE-CTIE", "objective": "Prepare incubatees for Elevate 100 seed funding contest.\u200b", "participants_raw": "7 applied; 6 shortlisted for 1st-round pitch", "participants_count": 0, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2017-18/pdf/E1718_10.pdf", "filepath": "KLE-CTIE-Events/Events_2017-18/E1718_10.html"}, {"id": "E1718_09", "title": "Workshop \u2013 \u201cMy Startup Health Check\u201d", "year": "2017-18", "date": "15-06-2017", "venue": "KLE-CTIE", "organizer": "KLE-CTIE", "objective": "Guide startups on finance, compliance and valuation.\u200b", "participants_raw": "12 startups", "participants_count": 12, "images": ["KLE-CTIE-Events/Events_2017-18/images/E1718_09_a.jpg", "KLE-CTIE-Events/Events_2017-18/images/E1718_09_b.jpg"], "pdf_filepath": "KLE-CTIE-Events/Events_2017-18/pdf/E1718_09.pdf", "filepath": "KLE-CTIE-Events/Events_2017-18/E1718_09.html"}, {"id": "E1718_08", "title": "\u201cMy Story\u201d Session by K.S. Bhatia \u2013 PumpKart", "year": "2017-18", "date": "31-05-2017", "venue": "KLE-CTIE", "organizer": "KLE-CTIE", "objective": "Inspire startups through founder\u2019s journey in organizing an unorganized sector.\u200b", "participants_raw": "25 startups", "participants_count": 25, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2017-18/pdf/E1718_08.pdf", "filepath": "KLE-CTIE-Events/Events_2017-18/E1718_08.html"}, {"id": "E1718_07", "title": "One-on-One Interactive Session with Psychologist \u2013 Ms. Mamata Hiremath", "year": "2017-18", "date": "29-05-2017", "venue": "KLE-CTIE", "organizer": "KLE-CTIE", "objective": "Provide psychological support and industrial psychology inputs to founders.\u200b", "participants_raw": "12 startups", "participants_count": 12, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2017-18/pdf/E1718_07.pdf", "filepath": "KLE-CTIE-Events/Events_2017-18/E1718_07.html"}, {"id": "E1718_06", "title": "Mentor Me Program \u2013 Incubation Decisions", "year": "2017-18", "date": "27-05-2017", "venue": "KLE-CTIE", "organizer": "KLE-CTIE", "objective": "Review aspiring startups and decide on incubation.\u200b", "participants_raw": "2 aspiring startups", "participants_count": 2, "images": ["KLE-CTIE-Events/Events_2017-18/images/E1718_06_a.jpg", "KLE-CTIE-Events/Events_2017-18/images/E1718_06_b.jpg"], "pdf_filepath": "KLE-CTIE-Events/Events_2017-18/pdf/E1718_06.pdf", "filepath": "KLE-CTIE-Events/Events_2017-18/E1718_06.html"}, {"id": "E1718_05", "title": "Session \u2013 \u201cOpportunities & Strategies for a Digital Era\u201d", "year": "2017-18", "date": "05-05-2017", "venue": "KLE Tech campus", "organizer": "KLE-CTIE", "objective": "Expose students and startups to digital-era business opportunities and strategies.\u200b", "participants_raw": "About 450 attendees", "participants_count": 450, "images": ["KLE-CTIE-Events/Events_2017-18/images/E1718_05_a.jpg", "KLE-CTIE-Events/Events_2017-18/images/E1718_05_b.jpg"], "pdf_filepath": "KLE-CTIE-Events/Events_2017-18/pdf/E1718_05.pdf", "filepath": "KLE-CTIE-Events/Events_2017-18/E1718_05.html"}, {"id": "E1718_04", "title": "Interactive Session with Mr. Anilkumar M \u2013 SLN Technologies", "year": "2017-18", "date": "02-05-2017", "venue": "KLE-CTIE", "organizer": "KLE-CTIE", "objective": "Share experience in product development and market sustenance.\u200b", "participants_raw": "10 startups", "participants_count": 10, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2017-18/pdf/E1718_04.pdf", "filepath": "KLE-CTIE-Events/Events_2017-18/E1718_04.html"}, {"id": "E1718_03", "title": "Interactive Session with Mr. Ravi Linganuri \u2013 Investor Expectations", "year": "2017-18", "date": "25-04-2017", "venue": "KLE-CTIE, Hubballi", "organizer": "KLE-CTIE", "objective": "Educate startups on what investors look for and how to scale.\u200b", "participants_raw": "18 startups; 8 business plans reviewed", "participants_count": 18, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2017-18/pdf/E1718_03.pdf", "filepath": "KLE-CTIE-Events/Events_2017-18/E1718_03.html"}, {"id": "E1718_02", "title": "7 Star Mentor Program \u2013 Incubation Screening", "year": "2017-18", "date": "08-04-2017", "venue": "KLE-CTIE", "organizer": "KLE-CTIE", "objective": "Evaluate aspiring companies seeking incubation.\u200b", "participants_raw": "23 attendees; 3 aspirant companies", "participants_count": 23, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2017-18/pdf/E1718_02.pdf", "filepath": "KLE-CTIE-Events/Events_2017-18/E1718_02.html"}, {"id": "E1718_01", "title": "CTIE Summary \u2013 Activities & Snapshot 2017\u201318", "year": "2017-18", "date": "2017\u201318", "venue": "KLE-CTIE", "organizer": "KLE-CTIE", "objective": "Summarize CTIE position and annual activity metrics.\u200b", "participants_raw": "15 mentorship events; 3 industry interface; 2 investor meets; 5 workshops; 4 student entrepreneurship events; 23 institutional visits", "participants_count": 15, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2017-18/pdf/E1718_01.pdf", "filepath": "KLE-CTIE-Events/Events_2017-18/E1718_01.html"}, {"id": "E1617_43", "title": "E-Summit 2017 \u2013 Entrepreneurship Summit", "year": "2016-17", "date": "03-03-2017", "venue": "BVB campus", "organizer": "KLE-CTIE", "objective": "Provide large-scale exposure to entrepreneurship and innovation.\u200b", "participants_raw": "Not specified (planned as major event)", "participants_count": 0, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2016-17/pdf/E1617_43.pdf", "filepath": "KLE-CTIE-Events/Events_2016-17/E1617_43.html"}, {"id": "E1617_42", "title": "New Incubations \u2013 Simpragma, Origami Automation, Sustainable Bio-Solutions", "year": "2016-17", "date": "01-02-2017", "venue": "KLE-CTIE Tech Park", "organizer": "KLE-CTIE", "objective": "Add new startups to CTIE portfolio.\u200b", "participants_raw": "3 companies", "participants_count": 3, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2016-17/pdf/E1617_42.pdf", "filepath": "KLE-CTIE-Events/Events_2016-17/E1617_42.html"}, {"id": "E1617_41", "title": "Intel Ideation Camp 2017", "year": "2016-17", "date": "10-02-2017", "venue": "BVB campus", "organizer": "KLE-CTIE with Intel", "objective": "Conduct 2017 edition of Intel-backed ideation camp.\u200b", "participants_raw": "253 registrations; 78 selected", "participants_count": 253, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2016-17/pdf/E1617_41.pdf", "filepath": "KLE-CTIE-Events/Events_2016-17/E1617_41.html"}, {"id": "E1617_40", "title": "Visit of KLE\u2019s M.S. Sheshgiri College Faculty & Principal", "year": "2016-17", "date": "04-02-2017", "venue": "KLE-CTIE", "organizer": "KLE-CTIE", "objective": "Showcase CTIE model to sister institution.\u200b", "participants_raw": "32 visitors", "participants_count": 32, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2016-17/pdf/E1617_40.pdf", "filepath": "KLE-CTIE-Events/Events_2016-17/E1617_40.html"}, {"id": "E1617_39", "title": "Workshop on IoT in Sports, Wellness, Healthcare", "year": "2016-17", "date": "18-02-2017", "venue": "BVB campus", "organizer": "KLE-CTIE (pre-Intel Mini Lab)", "objective": "Introduce applications of IoT in key domains as pre-cursor to Intel Mini Lab.\u200b", "participants_raw": "Over 100 participants", "participants_count": 100, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2016-17/pdf/E1617_39.pdf", "filepath": "KLE-CTIE-Events/Events_2016-17/E1617_39.html"}, {"id": "E1617_38", "title": "First Board Meeting of KLE-CTIE Society", "year": "2016-17", "date": "27-01-2017", "venue": "KLE Tech premises", "organizer": "KLE-CTIE Society", "objective": "Discuss future course of action for CTIE society.\u200b", "participants_raw": "Not specified", "participants_count": 0, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2016-17/pdf/E1617_38.pdf", "filepath": "KLE-CTIE-Events/Events_2016-17/E1617_38.html"}, {"id": "E1617_37", "title": "KLE-CTIE Tech Park \u2013 Agreements & Occupation Prep", "year": "2016-17", "date": "01-12-2016", "venue": "KLE Tech campus", "organizer": "KLE-CTIE", "objective": "Finalize Tech Park usage agreements and open for occupation.\u200b", "participants_raw": "Not specified", "participants_count": 0, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2016-17/pdf/E1617_37.pdf", "filepath": "KLE-CTIE-Events/Events_2016-17/E1617_37.html"}, {"id": "E1617_36", "title": "Laghu Udyog Bharati \u2013 NID Design Scheme Seminar", "year": "2016-17", "date": "08-12-2016", "venue": "KLE Tech campus", "organizer": "Laghu Udyog Bharati & NID with CTIE", "objective": "Promote design scheme opportunities to MSMEs/startups.\u200b", "participants_raw": "Not specified", "participants_count": 0, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2016-17/pdf/E1617_36.pdf", "filepath": "KLE-CTIE-Events/Events_2016-17/E1617_36.html"}, {"id": "E1617_35", "title": "CTIE Model Presentation to Karnataka IT Secretary", "year": "2016-17", "date": "01-12-2016", "venue": "Karnataka IT Dept / venue not specified", "organizer": "KLE-CTIE", "objective": "Showcase CTIE as a model for tier-II startup ecosystem.\u200b", "participants_raw": "Not specified", "participants_count": 0, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2016-17/pdf/E1617_35.pdf", "filepath": "KLE-CTIE-Events/Events_2016-17/E1617_35.html"}, {"id": "E1617_34", "title": "Minor in ENTR \u2013 BOS/BOE Formation & Student Selection", "year": "2016-17", "date": "01-12-2016", "venue": "KLE Tech campus", "organizer": "KLE-CTIE", "objective": "Finalize governance bodies and admit first cohort.\u200b", "participants_raw": "55 students selected", "participants_count": 55, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2016-17/pdf/E1617_34.pdf", "filepath": "KLE-CTIE-Events/Events_2016-17/E1617_34.html"}, {"id": "E1617_33", "title": "DST TBI Approval & Agreements", "year": "2016-17", "date": "01-12-2016", "venue": "KLE Tech campus", "organizer": "DST / KLE-CTIE", "objective": "Secure DST approval and ready agreements for TBI funding.\u200b", "participants_raw": "Not specified", "participants_count": 0, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2016-17/pdf/E1617_33.pdf", "filepath": "KLE-CTIE-Events/Events_2016-17/E1617_33.html"}, {"id": "E1617_32", "title": "Student Exchange Program \u2013 On-campus Edition (60 Students, 4 Countries)", "year": "2016-17", "date": "28-12-2016", "venue": "KLE Tech campus", "organizer": "KLE-CTIE", "objective": "Run multi-country exchange program at BVB campus.\u200b", "participants_raw": "60 students", "participants_count": 60, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2016-17/pdf/E1617_32.pdf", "filepath": "KLE-CTIE-Events/Events_2016-17/E1617_32.html"}, {"id": "E1617_31", "title": "CTIE Model Presentations to IESA, SeNSE IISc, PwC", "year": "2016-17", "date": "November", "venue": "Various venues (IESA, IISc, etc.)", "organizer": "KLE-CTIE", "objective": "Share CTIE model with industry associations and policy partners.\u200b", "participants_raw": "Not specified", "participants_count": 0, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2016-17/pdf/E1617_31.pdf", "filepath": "KLE-CTIE-Events/Events_2016-17/E1617_31.html"}, {"id": "E1617_30", "title": "Intel & Revvx Visit \u2013 Intel Maker Lab Briefing", "year": "2016-17", "date": "01-11-2016", "venue": "KLE Tech campus", "organizer": "Intel, Revvx, KLE-CTIE", "objective": "Introduce Intel Maker Lab opportunities to IoT and hardware companies.\u200b", "participants_raw": "Not specified", "participants_count": 0, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2016-17/pdf/E1617_30.pdf", "filepath": "KLE-CTIE-Events/Events_2016-17/E1617_30.html"}, {"id": "E1617_29", "title": "Student Exchange Program 2016\u201317 \u2013 Local Edition Planning", "year": "2016-17", "date": "28-12-2016", "venue": "KLE Tech campus", "organizer": "KLE-CTIE", "objective": "Prepare on-campus edition with Indian and foreign students.\u200b", "participants_raw": "32 BVB students; total 60 participants", "participants_count": 32, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2016-17/pdf/E1617_29.pdf", "filepath": "KLE-CTIE-Events/Events_2016-17/E1617_29.html"}, {"id": "E1617_28", "title": "Minor in ENTR \u2013 BOS Completed & Recommendations Incorporated", "year": "2016-17", "date": "01-11-2016", "venue": "KLE Tech campus", "organizer": "KLE-CTIE", "objective": "Refine minor program based on BOS recommendations.\u200b", "participants_raw": "Not specified", "participants_count": 0, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2016-17/pdf/E1617_28.pdf", "filepath": "KLE-CTIE-Events/Events_2016-17/E1617_28.html"}, {"id": "E1617_27", "title": "Visit by Govt. Engineering College, Karad \u2013 CTIE Model Exposure", "year": "2016-17", "date": "25-11-2016", "venue": "KLE Tech campus", "organizer": "KLE-CTIE", "objective": "Showcase OBE implementation and CTIE model.\u200b", "participants_raw": "23 visitors", "participants_count": 23, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2016-17/pdf/E1617_27.pdf", "filepath": "KLE-CTIE-Events/Events_2016-17/E1617_27.html"}, {"id": "E1617_26", "title": "CTIE Capstone Projects \u2013 Semester End Exam", "year": "2016-17", "date": "25-11-2016", "venue": "BVB campus", "organizer": "KLE-CTIE", "objective": "Conduct semester-end review with external industry expert.\u200b", "participants_raw": "Not specified", "participants_count": 0, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2016-17/pdf/E1617_26.pdf", "filepath": "KLE-CTIE-Events/Events_2016-17/E1617_26.html"}, {"id": "E1617_25", "title": "KLE-CTIE Tech Park \u2013 Completion & Open House Planning", "year": "2016-17", "date": "Oct\u2013Nov", "venue": "KLE Tech campus", "organizer": "KLE-CTIE", "objective": "Finish Tech Park and plan occupancy.\u200b", "participants_raw": "Not specified", "participants_count": 0, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2016-17/pdf/E1617_25.pdf", "filepath": "KLE-CTIE-Events/Events_2016-17/E1617_25.html"}, {"id": "E1617_24", "title": "Minor in ENTR \u2013 Board of Studies Constitution and Planning", "year": "2016-17", "date": "01-10-2016", "venue": "KLE Tech campus", "organizer": "KLE-CTIE", "objective": "Formalize academic structure of Minor in Entrepreneurship.\u200b", "participants_raw": "Not specified", "participants_count": 0, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2016-17/pdf/E1617_24.pdf", "filepath": "KLE-CTIE-Events/Events_2016-17/E1617_24.html"}, {"id": "E1617_23", "title": "PUPA Tech 2016 \u2013 Shortlisting & Productization Support", "year": "2016-17", "date": "October", "venue": "KLE Tech campus", "organizer": "CIPD / KLE-CTIE", "objective": "Take selected PUPA ideas towards POC/prototype.\u200b", "participants_raw": "16 teams", "participants_count": 16, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2016-17/pdf/E1617_23.pdf", "filepath": "KLE-CTIE-Events/Events_2016-17/E1617_23.html"}, {"id": "E1617_22", "title": "CTIE Review by Governing Council", "year": "2016-17", "date": "21-10-2016", "venue": "KLE Tech campus", "organizer": "KLE-CTIE", "objective": "Review CTIE progress and plans.\u200b", "participants_raw": "Not specified", "participants_count": 0, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2016-17/pdf/E1617_22.pdf", "filepath": "KLE-CTIE-Events/Events_2016-17/E1617_22.html"}, {"id": "E1617_21", "title": "Ongoing \u20187-Star\u2019 and \u2018Mentor Me\u2019 Mentoring \u2013 19 Teams Pitched", "year": "2016-17", "date": "By", "venue": "KLE-CTIE", "organizer": "KLE-CTIE", "objective": "Track cumulative usage of mentoring platforms.\u200b", "participants_raw": "19 business teams (12 student/capstone, 7 external)", "participants_count": 19, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2016-17/pdf/E1617_21.pdf", "filepath": "KLE-CTIE-Events/Events_2016-17/E1617_21.html"}, {"id": "E1617_20", "title": "Preparation for 7th Student Exchange Program (Dec 2016\u2013Jan 2017)", "year": "2016-17", "date": "01-08-2016", "venue": "KLE Tech campus", "organizer": "KLE-CTIE", "objective": "Plan upcoming exchange with multiple countries.\u200b", "participants_raw": "Not specified", "participants_count": 0, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2016-17/pdf/E1617_20.pdf", "filepath": "KLE-CTIE-Events/Events_2016-17/E1617_20.html"}, {"id": "E1617_19", "title": "Minor in Entrepreneurship \u2013 Curriculum and T-L Documentation", "year": "2016-17", "date": "42583", "venue": "KLE Tech campus", "organizer": "KLE-CTIE", "objective": "Finalize syllabus and teaching\u2013learning details for Minor in ENTR.\u200b", "participants_raw": "Not specified", "participants_count": 0, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2016-17/pdf/E1617_19.pdf", "filepath": "KLE-CTIE-Events/Events_2016-17/E1617_19.html"}, {"id": "E1617_18", "title": "PUPA 2016 \u2013 Kick-off", "year": "2016-17", "date": "19-08-2016", "venue": "KLE Tech campus", "organizer": "MiB / KLE-CTIE", "objective": "Launch PUPA 2016 with focus on broad participation.\u200b", "participants_raw": "404 registered teams; 1250+ students", "participants_count": 404, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2016-17/pdf/E1617_18.pdf", "filepath": "KLE-CTIE-Events/Events_2016-17/E1617_18.html"}, {"id": "E1617_17", "title": "MiB \u2013 Orientation for New Students", "year": "2016-17", "date": "19-08-2016", "venue": "KLE Tech campus", "organizer": "MiB / KLE-CTIE", "objective": "Introduce new students to MiB vision and activities.\u200b", "participants_raw": "Over 700 students", "participants_count": 700, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2016-17/pdf/E1617_17.pdf", "filepath": "KLE-CTIE-Events/Events_2016-17/E1617_17.html"}, {"id": "E1617_16", "title": "Continuation of \u20187-Star\u2019 and \u2018Mentor Me\u2019 \u2013 Month 2", "year": "2016-17", "date": "01-06-2016", "venue": "KLE-CTIE", "organizer": "KLE-CTIE", "objective": "Run second-month sessions of both mentoring programs.\u200b", "participants_raw": "Not specified", "participants_count": 0, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2016-17/pdf/E1617_16.pdf", "filepath": "KLE-CTIE-Events/Events_2016-17/E1617_16.html"}, {"id": "E1617_15", "title": "6th Student Exchange Program at UMass Lowell", "year": "2016-17", "date": "11-06-2016", "venue": "UMass Lowell, USA", "organizer": "KLE-CTIE with UML", "objective": "Deliver multi-country entrepreneurial and technology program.\u200b", "participants_raw": "Over 73 students (7 countries), including 15 from BVB", "participants_count": 73, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2016-17/pdf/E1617_15.pdf", "filepath": "KLE-CTIE-Events/Events_2016-17/E1617_15.html"}, {"id": "E1617_14", "title": "Launch & Pilot of \u2018Mentor Me\u2019 (2016\u201317 Cycle)", "year": "2016-17", "date": "Planned", "venue": "KLE-CTIE (with remote mentors)", "organizer": "KLE-CTIE", "objective": "Start recurring external-mentor-based mentoring series.\u200b", "participants_raw": "4 startup plans in first pilot", "participants_count": 4, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2016-17/pdf/E1617_14.pdf", "filepath": "KLE-CTIE-Events/Events_2016-17/E1617_14.html"}, {"id": "E1617_13", "title": "First \u20187-Star\u2019 Mentoring Session", "year": "2016-17", "date": "42504", "venue": "Senate Hall, KLE Tech", "organizer": "KLE-CTIE", "objective": "Pilot monthly 7-Star mentoring interactions.\u200b", "participants_raw": "2 startups pitched in first round", "participants_count": 2, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2016-17/pdf/E1617_13.pdf", "filepath": "KLE-CTIE-Events/Events_2016-17/E1617_13.html"}, {"id": "E1617_12", "title": "Make in BVB (MiB) Handover Function", "year": "2016-17", "date": "25-05-2016", "venue": "BVB campus", "organizer": "MiB / KLE-CTIE", "objective": "Transition MiB leadership and expand membership base.\u200b", "participants_raw": "Over 70 students", "participants_count": 70, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2016-17/pdf/E1617_12.pdf", "filepath": "KLE-CTIE-Events/Events_2016-17/E1617_12.html"}, {"id": "E1617_11", "title": "Manthan 2016 \u2013 FICCI B-Plan Win", "year": "2016-17", "date": "28-05-2016", "venue": "Bangalore", "organizer": "FICCI (competition) / KLE-CTIE (support)", "objective": "Compete in Manthan 2016 with CTIE-enabled idea.\u200b", "participants_raw": "Not specified", "participants_count": 0, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2016-17/pdf/E1617_11.pdf", "filepath": "KLE-CTIE-Events/Events_2016-17/E1617_11.html"}, {"id": "E1617_10", "title": "UML\u2013KLE Student Exchange 2016 \u2013 Preparation & Idea Sourcing", "year": "2016-17", "date": "May\u2013June", "venue": "BVB & UML", "organizer": "KLE-CTIE with UML", "objective": "Prepare high-participation exchange with industry- and student-sourced project ideas.\u200b", "participants_raw": "74 registered participants (highest ever) with 15 unique project ideas", "participants_count": 74, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2016-17/pdf/E1617_10.pdf", "filepath": "KLE-CTIE-Events/Events_2016-17/E1617_10.html"}, {"id": "E1617_09", "title": "DD Chandana \u2013 10-Minute Program on CTIE", "year": "2016-17", "date": "21-05-2016", "venue": "TV broadcast (Kannada)", "organizer": "DD Chandana; KLE-CTIE", "objective": "Showcase CTIE model and activities to wider Kannada audience.\u200b", "participants_raw": "TV audience", "participants_count": 0, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2016-17/pdf/E1617_09.pdf", "filepath": "KLE-CTIE-Events/Events_2016-17/E1617_09.html"}, {"id": "E1617_08", "title": "CTIE Capstone Projects \u2013 Semester End Exam (SEE)", "year": "2016-17", "date": "04-05-2016", "venue": "BVB campus", "organizer": "KLE-CTIE", "objective": "Evaluate capstone project batch at semester end.\u200b", "participants_raw": "Not specified", "participants_count": 0, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2016-17/pdf/E1617_08.pdf", "filepath": "KLE-CTIE-Events/Events_2016-17/E1617_08.html"}, {"id": "E1617_07", "title": "Launch of \u20187-Star\u2019 Mentoring Program \u2013 Initial Meeting", "year": "2016-17", "date": "30-04-2016", "venue": "KLE-CTIE", "organizer": "KLE-CTIE", "objective": "Kick off structured internal panel mentoring.\u200b", "participants_raw": "Seven mentors; several startups", "participants_count": 0, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2016-17/pdf/E1617_07.pdf", "filepath": "KLE-CTIE-Events/Events_2016-17/E1617_07.html"}, {"id": "E1617_06", "title": "UML\u2013KLE Student Exchange 2016 \u2013 Selection & Visa Preparation", "year": "2016-17", "date": "April", "venue": "KLE Tech & UMass Lowell", "organizer": "KLE-CTIE with UML", "objective": "Prepare selected students for UMass exchange program.\u200b", "participants_raw": "16 students selected", "participants_count": 16, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2016-17/pdf/E1617_06.pdf", "filepath": "KLE-CTIE-Events/Events_2016-17/E1617_06.html"}, {"id": "E1617_05", "title": "CTIE & CIPD Review Meeting", "year": "2016-17", "date": "22-04-2016", "venue": "KLE Tech campus", "organizer": "KLE-CTIE / CIPD", "objective": "Review activities and plans of CTIE and CIPD.\u200b", "participants_raw": "Not specified", "participants_count": 0, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2016-17/pdf/E1617_05.pdf", "filepath": "KLE-CTIE-Events/Events_2016-17/E1617_05.html"}, {"id": "E1617_04", "title": "ONYX 2016 \u2013 Product Demo", "year": "2016-17", "date": "02-04-2016", "venue": "BVB campus", "organizer": "CIPD / KLE-CTIE", "objective": "Showcase student product development outcomes.\u200b", "participants_raw": "10 student teams", "participants_count": 10, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2016-17/pdf/E1617_04.pdf", "filepath": "KLE-CTIE-Events/Events_2016-17/E1617_04.html"}, {"id": "E1617_03", "title": "\u2018Mentor Me\u2019 Program \u2013 Every 4th Saturday", "year": "2016-17", "date": "Piloted", "venue": "KLE-CTIE (with remote mentors)", "organizer": "KLE-CTIE", "objective": "Connect startups with external mentors via in-person and online interactions.\u200b", "participants_raw": "At least 4 startup plans pitched in pilot", "participants_count": 4, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2016-17/pdf/E1617_03.pdf", "filepath": "KLE-CTIE-Events/Events_2016-17/E1617_03.html"}, {"id": "E1617_02", "title": "\u20187-Star\u2019 Mentoring Program \u2013 Every 2nd Saturday", "year": "2016-17", "date": "Started", "venue": "Senate Hall, KLE Tech", "organizer": "KLE-CTIE", "objective": "Provide regular panel mentoring by experienced CTIE entrepreneurs.\u200b", "participants_raw": "4\u20135 startups per session; 19 business teams pitched till date", "participants_count": 4, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2016-17/pdf/E1617_02.pdf", "filepath": "KLE-CTIE-Events/Events_2016-17/E1617_02.html"}, {"id": "E1617_01", "title": "CTIE Annual Metrics 2016\u201317", "year": "2016-17", "date": "2016\u201317", "venue": "KLE-CTIE", "organizer": "KLE-CTIE", "objective": "Summarize incubation and activity metrics for the year.\u200b", "participants_raw": "38 incubating startups; 244 interns; 224 jobs created", "participants_count": 38, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2016-17/pdf/E1617_01.pdf", "filepath": "KLE-CTIE-Events/Events_2016-17/E1617_01.html"}, {"id": "E1516_46", "title": "CTIE Governing Council Meeting \u2013 6th GC", "year": "2015-16", "date": "21-03-2016", "venue": "BVB campus", "organizer": "KLE-CTIE", "objective": "Conduct periodic review of CTIE by GC.\u200b", "participants_raw": "Not specified", "participants_count": 0, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2015-16/pdf/E1516_46.pdf", "filepath": "KLE-CTIE-Events/Events_2015-16/E1516_46.html"}, {"id": "E1516_45", "title": "ONYX 2016 \u2013 Product Development Event", "year": "2015-16", "date": "Kick-off", "venue": "BVB campus", "organizer": "CIPD / KLE-CTIE", "objective": "Engage students in developing tangible products across materials and electronics.\u200b", "participants_raw": "35 student teams", "participants_count": 35, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2015-16/pdf/E1516_45.pdf", "filepath": "KLE-CTIE-Events/Events_2015-16/E1516_45.html"}, {"id": "E1516_44", "title": "E-Summit 2016 \u2013 Two-day Entrepreneurship Summit", "year": "2015-16", "date": "10-03-2016", "venue": "BVB campus", "organizer": "KLE-CTIE", "objective": "Expose students to entrepreneurship through talks, workshops and pitch contest.\u200b", "participants_raw": "Over 1400 students", "participants_count": 1400, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2015-16/pdf/E1516_44.pdf", "filepath": "KLE-CTIE-Events/Events_2015-16/E1516_44.html"}, {"id": "E1516_43", "title": "New Student Startup \u2013 Tweak Labs", "year": "2015-16", "date": "01-02-2016", "venue": "CTIE, BVB campus", "organizer": "Tweak Labs / KLE-CTIE", "objective": "Support new student-led startup.\u200b", "participants_raw": "Not specified", "participants_count": 0, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2015-16/pdf/E1516_43.pdf", "filepath": "KLE-CTIE-Events/Events_2015-16/E1516_43.html"}, {"id": "E1516_42", "title": "CTIE Registration as Society & Capex Procurement", "year": "2015-16", "date": "01-02-2016", "venue": "BVB / CTIE", "organizer": "KLE-CTIE", "objective": "Formalize CTIE as registered society and progress on equipment procurement.\u200b", "participants_raw": "Not applicable", "participants_count": 0, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2015-16/pdf/E1516_42.pdf", "filepath": "KLE-CTIE-Events/Events_2015-16/E1516_42.html"}, {"id": "E1516_41", "title": "4th Intel Ideation Camp", "year": "2015-16", "date": "12-02-2016", "venue": "BVB campus", "organizer": "KLE-CTIE with Intel", "objective": "Equip selected students with ideation skills.\u200b", "participants_raw": "72 students selected from over 350 applicants", "participants_count": 72, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2015-16/pdf/E1516_41.pdf", "filepath": "KLE-CTIE-Events/Events_2015-16/E1516_41.html"}, {"id": "E1516_40", "title": "Entrepreneurial Leadership Orientation \u2013 CTIE & Minor in ENTR", "year": "2015-16", "date": "03-02-2016", "venue": "BVB campus", "organizer": "KLE-CTIE", "objective": "Introduce 2nd and 4th semester students to CTIE and Minor in Entrepreneurship.\u200b", "participants_raw": "Not specified", "participants_count": 0, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2015-16/pdf/E1516_40.pdf", "filepath": "KLE-CTIE-Events/Events_2015-16/E1516_40.html"}, {"id": "E1516_39", "title": "CTIE & CIPD Governing Council Reviews", "year": "2015-16", "date": "21-01-2016", "venue": "BVB campus", "organizer": "KLE-CTIE / CIPD", "objective": "Review progress and define roadmap for CTIE and CIPD.\u200b", "participants_raw": "Not specified", "participants_count": 0, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2015-16/pdf/E1516_39.pdf", "filepath": "KLE-CTIE-Events/Events_2015-16/E1516_39.html"}, {"id": "E1516_38", "title": "ICEMII 2016 \u2013 Plenary on Enabling Entrepreneurial Ecosystem", "year": "2015-16", "date": "January", "venue": "ICEMII 2016 venue", "organizer": "KLE-CTIE / ICEMII", "objective": "Discuss campus entrepreneurial ecosystem with national experts.\u200b", "participants_raw": "Not specified", "participants_count": 0, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2015-16/pdf/E1516_38.pdf", "filepath": "KLE-CTIE-Events/Events_2015-16/E1516_38.html"}, {"id": "E1516_37", "title": "Minor in Entrepreneurship \u2013 Faculty Development Phase I at BVB", "year": "2015-16", "date": "01-01-2016", "venue": "BVB campus", "organizer": "KLE-CTIE / UMass Lowell", "objective": "Train faculty to deliver Minor in ENTR.\u200b", "participants_raw": "Not specified", "participants_count": 0, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2015-16/pdf/E1516_37.pdf", "filepath": "KLE-CTIE-Events/Events_2015-16/E1516_37.html"}, {"id": "E1516_36", "title": "ICTIEE 2016 \u2013 Paper Presentation in Pune", "year": "2015-16", "date": "January", "venue": "Pune", "organizer": "KLE-CTIE / ICTIEE", "objective": "Disseminate CTIE ecosystem model.\u200b", "participants_raw": "Over 60 participants in session", "participants_count": 60, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2015-16/pdf/E1516_36.pdf", "filepath": "KLE-CTIE-Events/Events_2015-16/E1516_36.html"}, {"id": "E1516_35", "title": "Lifetrons Health \u2013 New Medical Devices Startup at CTIE", "year": "2015-16", "date": "01-12-2015", "venue": "CTIE, BVB campus", "organizer": "Lifetrons Health / KLE-CTIE", "objective": "Support medical device development startup.\u200b", "participants_raw": "Not specified", "participants_count": 0, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2015-16/pdf/E1516_35.pdf", "filepath": "KLE-CTIE-Events/Events_2015-16/E1516_35.html"}, {"id": "E1516_34", "title": "Student Exchange & Faculty Development at BVB Campus", "year": "2015-16", "date": "30-12-2015", "venue": "BVB campus", "organizer": "KLE-CTIE / UML", "objective": "Host exchange and faculty development locally.\u200b", "participants_raw": "Not specified", "participants_count": 0, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2015-16/pdf/E1516_34.pdf", "filepath": "KLE-CTIE-Events/Events_2015-16/E1516_34.html"}, {"id": "E1516_33", "title": "CTIE Capstone Semester-end Exams & Grading", "year": "2015-16", "date": "04-12-2015", "venue": "BVB campus", "organizer": "KLE-CTIE", "objective": "Complete examinations and grading for capstone projects.\u200b", "participants_raw": "10 projects", "participants_count": 10, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2015-16/pdf/E1516_33.pdf", "filepath": "KLE-CTIE-Events/Events_2015-16/E1516_33.html"}, {"id": "E1516_32", "title": "Faculty Development Program (Minor in Entrepreneurship) \u2013 Phase Preparation", "year": "2015-16", "date": "42339", "venue": "BVB campus", "organizer": "KLE-CTIE", "objective": "Train faculty to deliver Minor in Entrepreneurship courses.\u200b", "participants_raw": "13 faculty signed up", "participants_count": 13, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2015-16/pdf/E1516_32.pdf", "filepath": "KLE-CTIE-Events/Events_2015-16/E1516_32.html"}, {"id": "E1516_31", "title": "Webinar for ICTIEE 2016 Paper \u2013 Integrating Entrepreneurial Ecosystem", "year": "2015-16", "date": "17-12-2015", "venue": "Online", "organizer": "KLE-CTIE / ICTIEE", "objective": "Share CTIE\u2019s ecosystem integration work with wider audience.\u200b", "participants_raw": "Not specified", "participants_count": 0, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2015-16/pdf/E1516_31.pdf", "filepath": "KLE-CTIE-Events/Events_2015-16/E1516_31.html"}, {"id": "E1516_30", "title": "CTIE & CIPD Reviews by Governing Council", "year": "2015-16", "date": "23-11-2015", "venue": "BVB campus", "organizer": "KLE-CTIE / CIPD", "objective": "Review CTIE and CIPD activities and roadmap.\u200b", "participants_raw": "Not specified", "participants_count": 0, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2015-16/pdf/E1516_30.pdf", "filepath": "KLE-CTIE-Events/Events_2015-16/E1516_30.html"}, {"id": "E1516_29", "title": "MSME Director Visit & Design Scheme Linkage", "year": "2015-16", "date": "20-11-2015", "venue": "BVB / CTIE", "organizer": "MSME Hubli with KLE-CTIE", "objective": "Strengthen MSME support and connect to design schemes.\u200b", "participants_raw": "Not specified", "participants_count": 0, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2015-16/pdf/E1516_29.pdf", "filepath": "KLE-CTIE-Events/Events_2015-16/E1516_29.html"}, {"id": "E1516_28", "title": "Visit of Umesh Vaidyamath, CEO INSZoom Inc.", "year": "2015-16", "date": "04-11-2015", "venue": "CTIE, BVB campus", "organizer": "KLE-CTIE", "objective": "Provide exposure to successful entrepreneur and gather insights.\u200b", "participants_raw": "Not specified", "participants_count": 0, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2015-16/pdf/E1516_28.pdf", "filepath": "KLE-CTIE-Events/Events_2015-16/E1516_28.html"}, {"id": "E1516_27", "title": "Visit of S. Ganapathi \u2013 Serial Entrepreneur & Investor", "year": "2015-16", "date": "October", "venue": "CTIE, BVB campus", "organizer": "KLE-CTIE", "objective": "Connect startups with experienced serial entrepreneur and potential investor.\u200b", "participants_raw": "Not specified", "participants_count": 0, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2015-16/pdf/E1516_27.pdf", "filepath": "KLE-CTIE-Events/Events_2015-16/E1516_27.html"}, {"id": "E1516_26", "title": "CTIE Summer Course \u2013 Technology Innovation and Entrepreneurship \u2013 Final CIE", "year": "2015-16", "date": "09-10-2015", "venue": "BVB campus", "organizer": "KLE-CTIE", "objective": "Assess students in summer TIE course.\u200b", "participants_raw": "Not specified", "participants_count": 0, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2015-16/pdf/E1516_26.pdf", "filepath": "KLE-CTIE-Events/Events_2015-16/E1516_26.html"}, {"id": "E1516_25", "title": "PUPA 2015 \u2013 Exhibition & Conclusion", "year": "2015-16", "date": "17-10-2015", "venue": "BVB campus", "organizer": "MiB / KLE-CTIE", "objective": "Showcase PUPA student products and experiences.\u200b", "participants_raw": "Not specified (very high response)", "participants_count": 0, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2015-16/pdf/E1516_25.pdf", "filepath": "KLE-CTIE-Events/Events_2015-16/E1516_25.html"}, {"id": "E1516_24", "title": "Chromosis \u2013 Launch of MyStartupBazaar Portal", "year": "2015-16", "date": "42277", "venue": "Online / CTIE", "organizer": "Chromosis Software", "objective": "Provide virtual platform for young startups and students.\u200b", "participants_raw": "Not specified", "participants_count": 0, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2015-16/pdf/E1516_24.pdf", "filepath": "KLE-CTIE-Events/Events_2015-16/E1516_24.html"}, {"id": "E1516_23", "title": "New Incubation \u2013 Multiple Startups Join CTIE", "year": "2015-16", "date": "August\u2013September", "venue": "CTIE, BVB campus", "organizer": "KLE-CTIE", "objective": "Onboard new startups across biotech, software, IoT, waste management, analytics, etc.\u200b", "participants_raw": "At least 7 companies", "participants_count": 7, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2015-16/pdf/E1516_23.pdf", "filepath": "KLE-CTIE-Events/Events_2015-16/E1516_23.html"}, {"id": "E1516_22", "title": "Business Strategy Review Workshop for Capstone Teams", "year": "2015-16", "date": "06-09-2015", "venue": "BVB campus", "organizer": "KLE-CTIE", "objective": "Refine business strategies of CTIE capstone teams.\u200b", "participants_raw": "Not specified", "participants_count": 0, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2015-16/pdf/E1516_22.pdf", "filepath": "KLE-CTIE-Events/Events_2015-16/E1516_22.html"}, {"id": "E1516_21", "title": "PUPA 2015 \u2013 Launch & Team Registration", "year": "2015-16", "date": "September", "venue": "BVB campus", "organizer": "MiB / KLE-CTIE", "objective": "Run large-scale product and enterprise event for students.\u200b", "participants_raw": "240 teams signed up", "participants_count": 240, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2015-16/pdf/E1516_21.pdf", "filepath": "KLE-CTIE-Events/Events_2015-16/E1516_21.html"}, {"id": "E1516_20", "title": "CTIE\u2013RISE \u2013 Get-together of CTIE Clients", "year": "2015-16", "date": "14-08-2015", "venue": "CTIE, BVB campus", "organizer": "KLE-CTIE", "objective": "Strengthen community among CTIE startups.\u200b", "participants_raw": "35 representatives", "participants_count": 35, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2015-16/pdf/E1516_20.pdf", "filepath": "KLE-CTIE-Events/Events_2015-16/E1516_20.html"}, {"id": "E1516_19", "title": "LabInApp \u2013 Rs 1 Crore Seed Funding", "year": "2015-16", "date": "01-06-2015", "venue": "CTIE startup; Unitus Seed Fund", "organizer": "LabInApp; Unitus Seed Fund", "objective": "Secure significant seed investment for CTIE-incubated startup.\u200b", "participants_raw": "Not specified", "participants_count": 0, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2015-16/pdf/E1516_19.pdf", "filepath": "KLE-CTIE-Events/Events_2015-16/E1516_19.html"}, {"id": "E1516_18", "title": "MOOC \u2013 \u201cFirst Step in Entrepreneurship\u201d for Capstone Students", "year": "2015-16", "date": "June", "venue": "Online", "organizer": "KLE-CTIE", "objective": "Expose capstone students to foundational entrepreneurship course.\u200b", "participants_raw": "10 project teams", "participants_count": 10, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2015-16/pdf/E1516_18.pdf", "filepath": "KLE-CTIE-Events/Events_2015-16/E1516_18.html"}, {"id": "E1516_17", "title": "MIT Enterprise Forum Visit & Collaboration Lead", "year": "2015-16", "date": "01-06-2015", "venue": "MIT, Boston", "organizer": "CTIE delegation", "objective": "Expose CTIE team to product startup ecosystem and identify collaboration opportunities.\u200b", "participants_raw": "Not specified", "participants_count": 0, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2015-16/pdf/E1516_17.pdf", "filepath": "KLE-CTIE-Events/Events_2015-16/E1516_17.html"}, {"id": "E1516_16", "title": "BVB\u2013UML\u2013China\u2013Japan\u2013Guyana\u2013Thailand Student Exchange Program (2015 Edition)", "year": "2015-16", "date": "12-06-2015", "venue": "UMass Lowell", "organizer": "UMass Lowell with BVB and partner universities", "objective": "Deliver intensive global program on technology-based solutions.\u200b", "participants_raw": "52 students", "participants_count": 52, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2015-16/pdf/E1516_16.pdf", "filepath": "KLE-CTIE-Events/Events_2015-16/E1516_16.html"}, {"id": "E1516_15", "title": "Make in BVB (MiB) \u2013 New Team Kick-off", "year": "2015-16", "date": "01-05-2015", "venue": "BVB campus", "organizer": "MiB / KLE-CTIE", "objective": "Form new MiB core team for upcoming year.\u200b", "participants_raw": "52 volunteers", "participants_count": 52, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2015-16/pdf/E1516_15.pdf", "filepath": "KLE-CTIE-Events/Events_2015-16/E1516_15.html"}, {"id": "E1516_14", "title": "CTIE Capstone Project SEE \u2013 External Evaluation", "year": "2015-16", "date": "07-05-2015", "venue": "BVB campus", "organizer": "KLE-CTIE", "objective": "Conduct semester-end evaluation for capstone projects.\u200b", "participants_raw": "10 projects", "participants_count": 10, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2015-16/pdf/E1516_14.pdf", "filepath": "KLE-CTIE-Events/Events_2015-16/E1516_14.html"}, {"id": "E1516_13", "title": "MSME Proposal Review \u2013 Internal Review Committee", "year": "2015-16", "date": "May", "venue": "BVB / MSME Hubli", "organizer": "KLE-CTIE with MSME Hubli", "objective": "Review MSME funding proposals for student/startup projects.\u200b", "participants_raw": "7 proposals reviewed; 4 actively considered", "participants_count": 7, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2015-16/pdf/E1516_13.pdf", "filepath": "KLE-CTIE-Events/Events_2015-16/E1516_13.html"}, {"id": "E1516_12", "title": "Butterfly 2015 \u2013 Pitch Contest", "year": "2015-16", "date": "29-05-2015", "venue": "BVB campus", "organizer": "KLE-CTIE", "objective": "Select capstone-track projects from Butterfly submissions.\u200b", "participants_raw": "37 project ideas pitched; 13 selected", "participants_count": 37, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2015-16/pdf/E1516_12.pdf", "filepath": "KLE-CTIE-Events/Events_2015-16/E1516_12.html"}, {"id": "E1516_11", "title": "TalentYantra \u2013 Incubation at CTIE", "year": "2015-16", "date": "From", "venue": "CTIE, BVB campus", "organizer": "TalentYantra / KLE-CTIE", "objective": "Host technology-driven talent solutions startup at CTIE.\u200b", "participants_raw": "Not specified", "participants_count": 0, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2015-16/pdf/E1516_11.pdf", "filepath": "KLE-CTIE-Events/Events_2015-16/E1516_11.html"}, {"id": "E1516_10", "title": "Spundhan Software \u2013 Incubation at CTIE", "year": "2015-16", "date": "From", "venue": "CTIE, BVB campus", "organizer": "Spundhan Software / KLE-CTIE", "objective": "Onboard new company into CTIE incubation space.\u200b", "participants_raw": "Not specified", "participants_count": 0, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2015-16/pdf/E1516_10.pdf", "filepath": "KLE-CTIE-Events/Events_2015-16/E1516_10.html"}, {"id": "E1516_09", "title": "CTIE Speaker Series \u2013 Online Trade Fairs", "year": "2015-16", "date": "29-04-2015", "venue": "CTIE, BVB campus", "organizer": "KLE-CTIE", "objective": "Introduce concept and modalities of online trade fairs.\u200b", "participants_raw": "Around 30 participants", "participants_count": 30, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2015-16/pdf/E1516_09.pdf", "filepath": "KLE-CTIE-Events/Events_2015-16/E1516_09.html"}, {"id": "E1516_08", "title": "CTIE Speaker Series \u2013 Marketing of IT/ITeS and Funding Options", "year": "2015-16", "date": "29-04-2015", "venue": "CTIE, BVB campus", "organizer": "KLE-CTIE", "objective": "Share marketing and funding insights for young IT/ITeS startups.\u200b", "participants_raw": "Around 30 participants (shared across April talks)", "participants_count": 30, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2015-16/pdf/E1516_08.pdf", "filepath": "KLE-CTIE-Events/Events_2015-16/E1516_08.html"}, {"id": "E1516_07", "title": "CTIE Speaker Series \u2013 Debt vs Equity & Startup Finance", "year": "2015-16", "date": "17-04-2015", "venue": "CTIE, BVB campus", "organizer": "KLE-CTIE", "objective": "Educate startups on debt funding and role of banks.\u200b", "participants_raw": "Around 30 participants", "participants_count": 30, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2015-16/pdf/E1516_07.pdf", "filepath": "KLE-CTIE-Events/Events_2015-16/E1516_07.html"}, {"id": "E1516_06", "title": "MSME Proposal Submission \u2013 Student & Incubating Companies", "year": "2015-16", "date": "42095", "venue": "BVB / MSME Hubli", "organizer": "KLE-CTIE with MSME Hubli", "objective": "Seek MSME funding for incubating projects.\u200b", "participants_raw": "6 proposals submitted", "participants_count": 6, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2015-16/pdf/E1516_06.pdf", "filepath": "KLE-CTIE-Events/Events_2015-16/E1516_06.html"}, {"id": "E1516_05", "title": "CTIE Capstone Project Track \u2013 Final Review (2015 Batch)", "year": "2015-16", "date": "07-05-2015", "venue": "BVB campus", "organizer": "KLE-CTIE", "objective": "Evaluate CTIE capstone projects and identify startup potential.\u200b", "participants_raw": "10 projects", "participants_count": 10, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2015-16/pdf/E1516_05.pdf", "filepath": "KLE-CTIE-Events/Events_2015-16/E1516_05.html"}, {"id": "E1516_04", "title": "BIO_RISE Agri Science \u2013 B Plan Win at FKCCI", "year": "2015-16", "date": "01-04-2015", "venue": "FKCCI, Bangalore", "organizer": "FKCCI (competition), CTIE (project support)", "objective": "Compete in B-plan competition with CTIE capstone project.\u200b", "participants_raw": "78 teams (competition); 1 winning CTIE team", "participants_count": 78, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2015-16/pdf/E1516_04.pdf", "filepath": "KLE-CTIE-Events/Events_2015-16/E1516_04.html"}, {"id": "E1516_03", "title": "BVB\u2013UML Global Student Exchange \u2013 Multi-country Cohort Announcement", "year": "2015-16", "date": "April", "venue": "UMass Lowell, USA", "organizer": "UMass Lowell with BVB & partner universities", "objective": "Run multi-cultural, multi-disciplinary exchange around technology-based solutions.\u200b", "participants_raw": "9 Tokyo; 7 Thailand; 6 Guyana; 17 BVB; 19 UML (total 58)", "participants_count": 9, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2015-16/pdf/E1516_03.pdf", "filepath": "KLE-CTIE-Events/Events_2015-16/E1516_03.html"}, {"id": "E1516_02", "title": "BVB\u2013UML Student Exchange \u2013 Selection & Preparation", "year": "2015-16", "date": "April", "venue": "UMass Lowell, USA and BVB", "organizer": "BVB / UMass Lowell", "objective": "Select and prepare students for technology and entrepreneurship exchange program.\u200b", "participants_raw": "17 students selected (12 from 6th sem, 4 from 4th sem, 1 graduate)", "participants_count": 17, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2015-16/pdf/E1516_02.pdf", "filepath": "KLE-CTIE-Events/Events_2015-16/E1516_02.html"}, {"id": "E1516_01", "title": "Butterfly 2015 \u2013 Call & Proposals", "year": "2015-16", "date": "03-04-2015", "venue": "BVB / KLE Tech campus", "organizer": "KLE-CTIE", "objective": "Launch Butterfly 2015 business plan contest and collect project proposals.\u200b", "participants_raw": "Over 52 project proposals", "participants_count": 52, "images": [], "pdf_filepath": "KLE-CTIE-Events/Events_2015-16/pdf/E1516_01.pdf", "filepath": "KLE-CTIE-Events/Events_2015-16/E1516_01.html"}];
+        const years = ["2015-16", "2016-17", "2017-18", "2019-20", "2021-22", "2022-23", "Aug-20-Jun-21"];
+        
+        let activeEventId = null;
+        let activeLeftTab = 'list'; // 'list' or 'gallery'
+
+        // Copy protection funny messages
+        const funnyMessages = [
+            "🕵️‍♂️ Oops! Nice try, but this dashboard is like a secret recipe — not for copying!",
+            "🍪 No cookies for script kiddies! This code is locked 🔒",
+            "🐧 Peeking won't help. The real magic happens on our servers!",
+            "🎣 Fishing for code? Catch and release — back to work!",
+            "👻 Boo! Nothing to see here. Go build your own dashboard!",
+            "📸 Taking a screenshot? Don't forget to smile! 😁",
+            "🧙‍♂️ These aren't the droids you're looking for... move along!",
+            "🎭 Ctrl+C? More like Ctrl+CAN'T!",
+            "🔍 Inspect Element? More like INSPECT-YOUR-OWN-PROJECT!"
+        ];
+
+        function showSneakyMessage() {
+            const toast = document.getElementById('sneakyToast');
+            const randomMsg = funnyMessages[Math.floor(Math.random() * funnyMessages.length)];
+            toast.textContent = randomMsg;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2500);
+        }
+
+        // Copy blocks
+        document.addEventListener('contextmenu', (e) => { e.preventDefault(); showSneakyMessage(); return false; });
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'F12') { e.preventDefault(); showSneakyMessage(); return false; }
+            if (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J' || e.key === 'C')) { e.preventDefault(); showSneakyMessage(); return false; }
+            if (e.ctrlKey && e.key === 'u') { e.preventDefault(); showSneakyMessage(); return false; }
+            if (e.ctrlKey && e.key === 's') { e.preventDefault(); showSneakyMessage(); return false; }
+            if (e.ctrlKey && e.key === 'c' && !['INPUT','TEXTAREA','SELECT'].includes(document.activeElement.tagName)) { e.preventDefault(); showSneakyMessage(); return false; }
+            if (e.ctrlKey && e.key === 'x' && !['INPUT','TEXTAREA'].includes(document.activeElement.tagName)) { e.preventDefault(); showSneakyMessage(); return false; }
+            if (e.ctrlKey && e.key === 'v' && !['INPUT','TEXTAREA'].includes(document.activeElement.tagName)) { e.preventDefault(); showSneakyMessage(); return false; }
+            if (e.ctrlKey && e.key === 'p') { e.preventDefault(); showSneakyMessage(); return false; }
+        });
+        document.addEventListener('dragstart', (e) => e.preventDefault());
+        document.addEventListener('selectstart', (e) => { if (!['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName)) e.preventDefault(); });
+
+        // Populate filter dropdowns
+        const yearFilter = document.getElementById('year-filter');
+        years.reverse().forEach(y => {
+            const opt = document.createElement('option');
+            opt.value = y;
+            opt.textContent = y;
+            yearFilter.appendChild(opt);
+        });
+
+        const venueFilter = document.getElementById('venue-filter');
+        const uniqueVenues = [...new Set(events.map(e => e.venue).filter(v => v))].sort();
+        uniqueVenues.forEach(v => {
+            const opt = document.createElement('option');
+            opt.value = v;
+            opt.textContent = v;
+            venueFilter.appendChild(opt);
+        });
+
+        // Left Tab Switcher
+        function switchLeftTab(tab) {
+            activeLeftTab = tab;
+            document.getElementById('tab-list-btn').classList.toggle('active', tab === 'list');
+            document.getElementById('tab-gallery-btn').classList.toggle('active', tab === 'gallery');
+            
+            document.getElementById('list-view-content').classList.toggle('active', tab === 'list');
+            document.getElementById('gallery-view-content').classList.toggle('active', tab === 'gallery');
+        }
+
+        // Render List & Gallery
+        function renderContents(filteredEvents) {
+            const listContainer = document.getElementById('list-view-content');
+            const galleryContainer = document.getElementById('gallery-view-content');
+
+            // 1. Render List View
+            if (filteredEvents.length === 0) {
+                listContainer.innerHTML = '<div style="text-align:center; padding:3rem; color:var(--muted); font-size:12px;">No matching reports found</div>';
+            } else {
+                listContainer.innerHTML = filteredEvents.map(e => `
+                    <div class="event-card ${e.id === activeEventId ? 'active' : ''}" onclick="selectEvent('${e.id}', '${e.filepath}', '${e.title.replace(/'/g, "\'")}', '${e.pdf_filepath}')">
+                        <div class="event-card-header">
+                            <span class="event-id">${e.id}</span>
+                            <span class="event-year">${e.year}</span>
+                        </div>
+                        <div class="event-title" title="${e.title}">${e.title || 'Untitled Activity'}</div>
+                        <div class="event-meta">
+                            ${e.date ? `<div class="event-meta-item">📅 ${e.date}</div>` : ''}
+                            ${e.venue ? `<div class="event-meta-item" title="${e.venue}">📍 ${e.venue}</div>` : ''}
+                        </div>
+                        ${e.participants_raw ? `<div class="event-participants">🙋‍♂️ ${e.participants_raw}</div>` : ''}
+                    </div>
+                `).join('');
+            }
+
+            // 2. Render Gallery View (Only events with images)
+            const galleryEvents = filteredEvents.filter(e => e.images && e.images.length > 0);
+            if (galleryEvents.length === 0) {
+                galleryContainer.innerHTML = '<div style="text-align:center; padding:3rem; color:var(--muted); font-size:12px;">No events with images found</div>';
+            } else {
+                galleryContainer.innerHTML = `
+                    <div class="gallery-grid">
+                        ${galleryEvents.map(e => `
+                            <div class="gallery-card ${e.id === activeEventId ? 'active' : ''}" onclick="selectEvent('${e.id}', '${e.filepath}', '${e.title.replace(/'/g, "\'")}', '${e.pdf_filepath}')">
+                                <div class="gallery-img-wrapper">
+                                    <img src="${e.images[0]}" alt="${e.id} photo" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                                    <div class="gallery-img-placeholder" style="display:none;">📷</div>
+                                </div>
+                                <div class="gallery-info">
+                                    <span class="gallery-id">${e.id}</span>
+                                    <div class="gallery-title" title="${e.title}">${e.title}</div>
+                                    <span class="gallery-year">${e.year}</span>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            }
+        }
+
+        // Filter events
+        function filterEvents() {
+            const searchVal = document.getElementById('event-search').value.toLowerCase();
+            const yearVal = document.getElementById('year-filter').value;
+            const venueVal = document.getElementById('venue-filter').value;
+
+            const filtered = events.filter(e => {
+                const matchesSearch = !searchVal || 
+                    e.title.toLowerCase().includes(searchVal) ||
+                    e.venue.toLowerCase().includes(searchVal) ||
+                    e.organizer.toLowerCase().includes(searchVal) ||
+                    e.objective.toLowerCase().includes(searchVal) ||
+                    e.id.toLowerCase().includes(searchVal);
+                
+                const matchesYear = !yearVal || e.year === yearVal;
+                const matchesVenue = !venueVal || e.venue === venueVal;
+
+                return matchesSearch && matchesYear && matchesVenue;
+            });
+
+            renderContents(filtered);
+        }
+
+        let activeEventHtmlPath = '';
+        let activeEventPdfPath = '';
+        let currentViewMode = 'html';
+
+        function setViewMode(mode) {
+            if (mode === currentViewMode) return;
+            currentViewMode = mode;
+            
+            document.getElementById('view-mode-html').classList.toggle('active', mode === 'html');
+            document.getElementById('view-mode-pdf').classList.toggle('active', mode === 'pdf');
+            
+            const iframe = document.getElementById('viewer-iframe');
+            if (mode === 'html') {
+                iframe.src = activeEventHtmlPath;
+            } else if (mode === 'pdf') {
+                iframe.src = activeEventPdfPath;
+            }
+        }
+
+        // Load specific event into iframe viewport
+        function selectEvent(id, path, title, pdfPath) {
+            activeEventId = id;
+            activeEventHtmlPath = path;
+            activeEventPdfPath = (pdfPath && pdfPath !== 'None' && pdfPath !== '') ? pdfPath : '';
+            
+            // Toggle highlight in list and gallery
+            document.querySelectorAll('.event-card, .gallery-card').forEach(card => card.classList.remove('active'));
+            
+            // Find active DOM elements and mark them active without full redraw
+            filterEvents();
+            
+            const iframe = document.getElementById('viewer-iframe');
+            const placeholder = document.getElementById('viewer-placeholder');
+            const downloadBtn = document.getElementById('download-pdf-btn');
+            const toggleContainer = document.getElementById('view-mode-toggle');
+            const titleSpan = document.getElementById('active-event-title');
+            
+            iframe.style.display = 'block';
+            placeholder.style.display = 'none';
+            titleSpan.textContent = `${id}: ${title}`;
+
+            // Setup PDF Toggler and Download Link
+            if (activeEventPdfPath) {
+                downloadBtn.href = activeEventPdfPath;
+                downloadBtn.style.display = 'inline-flex';
+                toggleContainer.style.display = 'inline-flex';
+                
+                if (currentViewMode === 'pdf') {
+                    iframe.src = activeEventPdfPath;
+                } else {
+                    iframe.src = activeEventHtmlPath;
+                }
+            } else {
+                downloadBtn.style.display = 'none';
+                toggleContainer.style.display = 'none';
+                
+                // Fallback to HTML mode
+                currentViewMode = 'html';
+                document.getElementById('view-mode-html').classList.add('active');
+                document.getElementById('view-mode-pdf').classList.remove('active');
+                iframe.src = activeEventHtmlPath;
+            }
+        }
+
+        // Initialize lists
+        window.addEventListener('DOMContentLoaded', () => {
+            renderContents(events);
+        });
+    </script>
+</body>
+</html>
