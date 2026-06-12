@@ -761,17 +761,122 @@
             font-weight: 600;
         }
 
-        @media (max-width: 900px) {
-            .workspace-split {
-                grid-template-columns: 1fr;
-            }
-            .viewer-panel {
-                display: none;
-            }
-            .kpi-row {
-                grid-template-columns: repeat(2, 1fr);
-            }
+
+
+        /* Enhanced banner + responsive refinements */
+        .header {
+            min-height: 218px;
+            background:
+                radial-gradient(circle at 88% 18%, rgba(232, 201, 122, 0.20), transparent 30%),
+                linear-gradient(120deg, rgba(13, 27, 62, 0.96), rgba(26, 47, 94, 0.94)),
+                url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1200' height='360' viewBox='0 0 1200 360'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' x2='1'%3E%3Cstop stop-color='%23c9a84c' stop-opacity='.22'/%3E%3Cstop offset='1' stop-color='%23ffffff' stop-opacity='.04'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M0 260 C160 180 240 320 390 230 S610 100 760 178 1010 290 1200 118 V360 H0Z' fill='url(%23g)'/%3E%3Ccircle cx='1000' cy='72' r='92' fill='%23e8c97a' fill-opacity='.10'/%3E%3Ccircle cx='1085' cy='102' r='36' fill='%23ffffff' fill-opacity='.08'/%3E%3C/svg%3E");
+            background-size: cover;
+            background-position: center;
         }
+        .header::after {
+            content: '';
+            position: absolute;
+            left: 2rem;
+            right: 2rem;
+            bottom: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(232,201,122,.65), transparent);
+            z-index: 1;
+        }
+        .hero-stack {
+            min-width: 300px;
+            flex: 0 1 420px;
+        }
+        .hero-visual {
+            width: min(420px, 38vw);
+            max-width: 100%;
+            border-radius: 22px;
+            margin-top: 0.65rem;
+            filter: saturate(1.04);
+        }
+        .hero-visual svg {
+            display: block;
+            width: 100%;
+            height: auto;
+        }
+        .header-left {
+            flex: 1 1 440px;
+            min-width: 0;
+        }
+        .header-title {
+            font-size: clamp(30px, 4.4vw, 54px);
+            letter-spacing: -0.02em;
+        }
+        .header-sub {
+            max-width: 680px;
+            color: rgba(255, 255, 255, 0.72);
+            line-height: 1.55;
+        }
+        .header-tip {
+            flex-wrap: wrap;
+            line-height: 1.45;
+        }
+        .dashboard-container {
+            max-width: 1920px;
+        }
+        .kpi-row {
+            grid-template-columns: repeat(5, minmax(0, 1fr));
+        }
+        .workspace-split {
+            grid-template-columns: minmax(320px, 410px) minmax(0, 1fr);
+        }
+        .viewer-actions {
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+
+        @media (max-width: 1200px) {
+            .dashboard-container { padding: 1rem; }
+            .workspace-split { grid-template-columns: 360px minmax(0, 1fr); gap: 1rem; }
+            .hero-visual { width: min(340px, 36vw); }
+            .kpi-row { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+        }
+
+        @media (max-width: 900px) {
+            body { overflow-x: hidden; overflow-y: auto; }
+            .dashboard-container { height: auto; min-height: 100vh; padding: 0.75rem; }
+            .header { border-radius: 16px; padding: 1.25rem; min-height: unset; }
+            .header-inner { align-items: center; }
+            .header-right { align-items: flex-start; text-align: left; width: 100%; }
+            .hero-stack { min-width: 0; flex: 1 1 100%; }
+            .hero-visual { width: 100%; max-width: 520px; margin: 0.75rem auto 0; }
+            .kpi-row { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem; }
+            .workspace-split { grid-template-columns: 1fr; }
+            .list-panel, .viewer-panel { min-height: auto; }
+            .viewer-panel { display: flex; min-height: 72vh; }
+            .list-container { max-height: 62vh; }
+            .viewer-header { align-items: flex-start; gap: 0.75rem; flex-direction: column; }
+            .viewer-title { max-width: 100%; }
+            .viewer-actions { width: 100%; justify-content: flex-start; }
+        }
+
+        @media (max-width: 640px) {
+            :root { --footer-h: 44px; }
+            .dashboard-container { padding: 0.55rem; }
+            .header { padding: 1rem; }
+            .header-left .eyebrow { font-size: 9.5px; letter-spacing: 0.10em; }
+            .header-title { font-size: clamp(28px, 10vw, 40px); }
+            .header-sub, .header-tip { font-size: 12px !important; }
+            .kpi-row { grid-template-columns: 1fr; margin: 0.75rem 0; }
+            .filters-row { flex-direction: column; }
+            .select-filter { max-width: none; }
+            .left-tab-btn { font-size: 11px; padding: 8px 6px; }
+            .gallery-grid { grid-template-columns: 1fr; }
+            .event-meta { flex-wrap: wrap; gap: 0.35rem 0.65rem; }
+            .event-meta-item { max-width: 100%; }
+            .view-mode-toggle { width: 100%; margin-right: 0; }
+            .view-mode-btn { flex: 1; justify-content: center; padding: 7px 8px; }
+            .pdf-btn { width: 100%; justify-content: center; padding: 8px 12px; }
+            .iframe-container { min-height: 68vh; }
+            .sticky-footer span { font-size: 10px; padding: 0 0.75rem; text-align: center; }
+            #sneakyToast { max-width: calc(100vw - 24px); white-space: normal; text-align: center; }
+        }
+
     </style>
 </head>
 <body>
@@ -796,8 +901,41 @@
                         <span>📌 <b>Tip:</b> Select two or more years to compare. FY2015‑16 is the baseline.</span>
                     </div>
                 </div>
-                <div class="header-right">
-                    <div class="live-badge"><div class="live-dot"></div><span class="live-text">LOCAL DATABASE</span></div>
+                <div class="header-right hero-stack">
+                    <div class="live-badge"><div class="live-dot"></div><span class="live-text">GDRIVE READY</span></div>
+                    <div class="hero-visual" aria-hidden="true">
+                        <svg viewBox="0 0 520 260" role="img" focusable="false" xmlns="http://www.w3.org/2000/svg">
+                            <defs>
+                                <linearGradient id="heroCard" x1="0" x2="1" y1="0" y2="1">
+                                    <stop offset="0" stop-color="#ffffff" stop-opacity="0.96"/>
+                                    <stop offset="1" stop-color="#f5e9c8" stop-opacity="0.90"/>
+                                </linearGradient>
+                                <linearGradient id="heroGold" x1="0" x2="1">
+                                    <stop offset="0" stop-color="#c9a84c"/>
+                                    <stop offset="1" stop-color="#e8c97a"/>
+                                </linearGradient>
+                                <filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%">
+                                    <feDropShadow dx="0" dy="10" stdDeviation="10" flood-color="#000000" flood-opacity="0.18"/>
+                                </filter>
+                            </defs>
+                            <rect x="18" y="28" width="484" height="204" rx="30" fill="url(#heroCard)" filter="url(#softShadow)"/>
+                            <path d="M58 182 C120 116, 167 153, 220 92 C268 38, 323 68, 371 118 C411 159, 446 135, 474 94" fill="none" stroke="url(#heroGold)" stroke-width="8" stroke-linecap="round" opacity="0.75"/>
+                            <g fill="#0d1b3e" opacity="0.92">
+                                <rect x="70" y="75" width="88" height="88" rx="16" opacity="0.10"/>
+                                <path d="M91 137h46v8H91zm8-18h30v8H99zm15-34 29 21H85z"/>
+                                <rect x="204" y="62" width="112" height="128" rx="18" opacity="0.11"/>
+                                <path d="M233 98h54v8h-54zm0 22h54v8h-54zm0 22h36v8h-36z"/>
+                                <circle cx="365" cy="107" r="34" opacity="0.12"/>
+                                <path d="M365 74a33 33 0 1 1 0 66 33 33 0 0 1 0-66zm-5 17v23l20 12 5-8-15-9V91z"/>
+                            </g>
+                            <g fill="url(#heroGold)">
+                                <circle cx="161" cy="181" r="10"/>
+                                <circle cx="260" cy="72" r="8"/>
+                                <circle cx="435" cy="158" r="9"/>
+                            </g>
+                            <text x="260" y="216" text-anchor="middle" font-family="Outfit, Arial, sans-serif" font-size="18" font-weight="700" fill="#0d1b3e">Events · Reports · Impact</text>
+                        </svg>
+                    </div>
                 </div>
             </div>
         </header>
@@ -918,6 +1056,80 @@
         let activeLeftTab = 'list'; // 'list' or 'gallery'
         let gdriveMapping = {};
         let gasWebAppUrl = '';
+
+        /*
+         * GitHub Pages + Google Drive asset resolver
+         * ------------------------------------------------------------
+         * Keep index.html and gdrive_mapping.json in the same GitHub repo/folder.
+         * gdrive_mapping.json can map local dashboard paths to either:
+         *   1) plain Google Drive file IDs, or
+         *   2) full Google Drive URLs, or
+         *   3) already-public direct URLs.
+         */
+        function extractDriveFileId(value) {
+            if (!value) return '';
+            const str = String(value).trim();
+
+            // Already looks like a file id.
+            if (/^[a-zA-Z0-9_-]{20,}$/.test(str) && !str.includes('/')) return str;
+
+            const patterns = [
+                /drive\.google\.com\/file\/d\/([^/]+)/,
+                /drive\.google\.com\/open\?id=([^&]+)/,
+                /drive\.google\.com\/uc\?(?:export=[^&]+&)?id=([^&]+)/,
+                /[?&]id=([^&]+)/
+            ];
+            for (const pattern of patterns) {
+                const match = str.match(pattern);
+                if (match && match[1]) return decodeURIComponent(match[1]);
+            }
+            return '';
+        }
+
+        function getMappedValue(localPath) {
+            if (!localPath || !gdriveMapping) return '';
+            return gdriveMapping[localPath] || gdriveMapping[localPath.replace(/^\.\//, '')] || '';
+        }
+
+        function resolveDriveImageUrl(localPath, size = 600) {
+            const mapped = getMappedValue(localPath);
+            if (!mapped) return localPath; // local/GitHub fallback
+
+            const fileId = extractDriveFileId(mapped);
+            if (fileId) return `https://drive.google.com/thumbnail?id=${fileId}&sz=s${size}`;
+
+            // For non-Drive absolute URLs/CDN links.
+            return mapped;
+        }
+
+        function resolveDrivePdfUrls(localPath) {
+            const mapped = getMappedValue(localPath);
+            if (!mapped) return { preview: localPath || '', download: localPath || '' };
+
+            const fileId = extractDriveFileId(mapped);
+            if (fileId) {
+                return {
+                    preview: `https://drive.google.com/file/d/${fileId}/preview`,
+                    download: `https://drive.google.com/uc?export=download&id=${fileId}`
+                };
+            }
+            return { preview: mapped, download: mapped };
+        }
+
+        function resolveDriveHtmlUrl(localPath) {
+            const mapped = getMappedValue(localPath);
+            if (!mapped) return localPath || ''; // local/GitHub fallback
+
+            const fileId = extractDriveFileId(mapped);
+            if (fileId && gasWebAppUrl) return `${gasWebAppUrl}?id=${encodeURIComponent(fileId)}`;
+
+            // If the mapped value is a normal public URL, iframe it directly.
+            if (!fileId && /^https?:\/\//i.test(String(mapped))) return mapped;
+
+            // Last resort: Drive preview. Works for previewing, not ideal for raw HTML rendering.
+            if (fileId) return `https://drive.google.com/file/d/${fileId}/preview`;
+            return mapped;
+        }
 
         // Fetch Google Drive mapping if it exists
         fetch('gdrive_mapping.json')
@@ -1048,10 +1260,7 @@
                 galleryContainer.innerHTML = `
                     <div class="gallery-grid">
                         ${galleryEvents.map(e => {
-                            let imgPath = e.images[0];
-                            if (gdriveMapping && gdriveMapping[imgPath]) {
-                                imgPath = 'https://drive.google.com/thumbnail?id=' + gdriveMapping[imgPath] + '&sz=s400';
-                            }
+                            let imgPath = resolveDriveImageUrl(e.images[0], 400);
                             return `
                             <div class="gallery-card ${e.id === activeEventId ? 'active' : ''}" onclick="selectEvent('${e.id}', '${e.filepath}', '${e.title.replace(/'/g, "\\'")}', '${e.pdf_filepath}')">
                                 <div class="gallery-img-wrapper">
@@ -1123,18 +1332,12 @@
             let resolvedPdfPreviewPath = (pdfPath && pdfPath !== 'None' && pdfPath !== '') ? pdfPath : '';
             let resolvedPdfDownloadPath = resolvedPdfPreviewPath;
             
-            if (gdriveMapping) {
-                // If HTML file is mapped and GAS URL is configured
-                if (gdriveMapping[path] && gasWebAppUrl) {
-                    resolvedHtmlPath = gasWebAppUrl + '?id=' + gdriveMapping[path];
-                }
-                
-                // If PDF file is mapped
-                if (pdfPath && gdriveMapping[pdfPath]) {
-                    let pdfFileId = gdriveMapping[pdfPath];
-                    resolvedPdfPreviewPath = 'https://drive.google.com/file/d/' + pdfFileId + '/preview';
-                    resolvedPdfDownloadPath = 'https://drive.google.com/uc?export=download&id=' + pdfFileId;
-                }
+            // Resolve HTML/PDF from Google Drive mapping when available; otherwise use local/GitHub paths.
+            resolvedHtmlPath = resolveDriveHtmlUrl(path);
+            if (pdfPath && pdfPath !== 'None' && pdfPath !== '') {
+                const pdfUrls = resolveDrivePdfUrls(pdfPath);
+                resolvedPdfPreviewPath = pdfUrls.preview;
+                resolvedPdfDownloadPath = pdfUrls.download;
             }
             
             activeEventHtmlPathResolved = resolvedHtmlPath;
