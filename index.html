@@ -1088,47 +1088,70 @@
 
         function getMappedValue(localPath) {
             if (!localPath || !gdriveMapping) return '';
-            return gdriveMapping[localPath] || gdriveMapping[localPath.replace(/^\.\//, '')] || '';
+            const cleanPath = String(localPath).replace(/^\.\//, '');
+            return gdriveMapping[localPath] || gdriveMapping[cleanPath] || '';
+        }
+
+        function getMappedFileId(mapped) {
+            if (!mapped) return '';
+            if (typeof mapped === 'object') {
+                return mapped.id || mapped.fileId || extractDriveFileId(mapped.view_url || mapped.url || mapped.download_url || mapped.preview_url || mapped.direct_url || '');
+            }
+            return extractDriveFileId(mapped);
+        }
+
+        function getMappedUrl(mapped, keys) {
+            if (!mapped) return '';
+            if (typeof mapped === 'object') {
+                for (const key of keys) {
+                    if (mapped[key]) return mapped[key];
+                }
+                return mapped.url || mapped.view_url || '';
+            }
+            return String(mapped);
         }
 
         function resolveDriveImageUrl(localPath, size = 600) {
             const mapped = getMappedValue(localPath);
             if (!mapped) return localPath; // local/GitHub fallback
 
-            const fileId = extractDriveFileId(mapped);
+            const fileId = getMappedFileId(mapped);
             if (fileId) return `https://drive.google.com/thumbnail?id=${fileId}&sz=s${size}`;
 
-            // For non-Drive absolute URLs/CDN links.
-            return mapped;
+            return getMappedUrl(mapped, ['thumbnail_url', 'direct_url', 'download_url']);
         }
 
         function resolveDrivePdfUrls(localPath) {
             const mapped = getMappedValue(localPath);
             if (!mapped) return { preview: localPath || '', download: localPath || '' };
 
-            const fileId = extractDriveFileId(mapped);
+            const fileId = getMappedFileId(mapped);
             if (fileId) {
                 return {
-                    preview: `https://drive.google.com/file/d/${fileId}/preview`,
-                    download: `https://drive.google.com/uc?export=download&id=${fileId}`
+                    preview: getMappedUrl(mapped, ['preview_url']) || `https://drive.google.com/file/d/${fileId}/preview`,
+                    download: getMappedUrl(mapped, ['download_url']) || `https://drive.google.com/uc?export=download&id=${fileId}`
                 };
             }
-            return { preview: mapped, download: mapped };
+            const url = getMappedUrl(mapped, ['preview_url', 'view_url', 'download_url']);
+            return { preview: url, download: url };
         }
 
         function resolveDriveHtmlUrl(localPath) {
             const mapped = getMappedValue(localPath);
             if (!mapped) return localPath || ''; // local/GitHub fallback
 
-            const fileId = extractDriveFileId(mapped);
+            const fileId = getMappedFileId(mapped);
+            const mappedProxy = getMappedUrl(mapped, ['proxy_url']);
+            if (mappedProxy) return mappedProxy;
             if (fileId && gasWebAppUrl) return `${gasWebAppUrl}?id=${encodeURIComponent(fileId)}`;
 
             // If the mapped value is a normal public URL, iframe it directly.
-            if (!fileId && /^https?:\/\//i.test(String(mapped))) return mapped;
+            const rawUrl = getMappedUrl(mapped, ['raw_url', 'view_url', 'download_url']);
+            if (!fileId && /^https?:\/\//i.test(String(rawUrl))) return rawUrl;
 
             // Last resort: Drive preview. Works for previewing, not ideal for raw HTML rendering.
             if (fileId) return `https://drive.google.com/file/d/${fileId}/preview`;
-            return mapped;
+            return rawUrl || String(mapped);
         }
 
         // Fetch Google Drive mapping if it exists
