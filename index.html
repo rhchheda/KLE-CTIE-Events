@@ -1055,7 +1055,9 @@
         let activeEventId = null;
         let activeLeftTab = 'list'; // 'list' or 'gallery'
         let gdriveMapping = {};
-        let gasWebAppUrl = '';
+        // Default/current Apps Script Web App URL used when mapping contains only a GAS deployment id.
+        // You can override this by adding "__gas_web_app_url__" in gdrive_mapping.json.
+        let gasWebAppUrl = 'https://script.google.com/macros/s/AKfycbymLkKRqFFOzyAYw6XBOxKUwztbGsY-J3FAyp6AiI37f0YkueBRi1kx4SWb7MWcLJ1f/exec';
 
         /*
          * GitHub Pages + Google Drive asset resolver
@@ -1086,10 +1088,24 @@
             return '';
         }
 
+        function normalizeLocalPath(localPath) {
+            return String(localPath || '')
+                .trim()
+                .replace(/^\.\//, '')
+                .replace(/^\//, '')
+                .replace(/^KLE-CTIE-Events\//, '');
+        }
+
         function getMappedValue(localPath) {
             if (!localPath || !gdriveMapping) return '';
-            const cleanPath = String(localPath).replace(/^\.\//, '');
-            return gdriveMapping[localPath] || gdriveMapping[cleanPath] || '';
+            const rawPath = String(localPath);
+            const cleanPath = normalizeLocalPath(rawPath);
+
+            // Try exact, normalized, and repo-prefixed variants.
+            return gdriveMapping[rawPath]
+                || gdriveMapping[cleanPath]
+                || gdriveMapping[`KLE-CTIE-Events/${cleanPath}`]
+                || '';
         }
 
         function getMappedFileId(mapped) {
@@ -1111,9 +1127,31 @@
             return String(mapped);
         }
 
+        function completeGasUrl(value, fileId = '') {
+            if (!value) return '';
+            let str = String(value).trim();
+
+            // Already a complete URL.
+            if (/^https?:\/\//i.test(str)) return str;
+
+            // Mapping generated only the Apps Script deployment id/path, e.g.
+            // AKfy.../exec?id=FILE_ID
+            if (/^AKfy/i.test(str)) {
+                str = `https://script.google.com/macros/s/${str}`;
+                return str;
+            }
+
+            // Mapping may contain only deployment id without /exec.
+            if (/^[-_A-Za-z0-9]{40,}$/i.test(str) && fileId) {
+                return `https://script.google.com/macros/s/${str}/exec?id=${encodeURIComponent(fileId)}`;
+            }
+
+            return '';
+        }
+
         function resolveDriveImageUrl(localPath, size = 600) {
             const mapped = getMappedValue(localPath);
-            if (!mapped) return localPath; // local/GitHub fallback
+            if (!mapped) return normalizeLocalPath(localPath); // local/GitHub fallback
 
             const fileId = getMappedFileId(mapped);
             if (fileId) return `https://drive.google.com/thumbnail?id=${fileId}&sz=s${size}`;
@@ -1123,7 +1161,7 @@
 
         function resolveDrivePdfUrls(localPath) {
             const mapped = getMappedValue(localPath);
-            if (!mapped) return { preview: localPath || '', download: localPath || '' };
+            if (!mapped) return { preview: normalizeLocalPath(localPath) || '', download: normalizeLocalPath(localPath) || '' };
 
             const fileId = getMappedFileId(mapped);
             if (fileId) {
@@ -1138,11 +1176,20 @@
 
         function resolveDriveHtmlUrl(localPath) {
             const mapped = getMappedValue(localPath);
-            if (!mapped) return localPath || ''; // local/GitHub fallback
+            if (!mapped) return normalizeLocalPath(localPath) || ''; // local/GitHub fallback
 
             const fileId = getMappedFileId(mapped);
-            const mappedProxy = getMappedUrl(mapped, ['proxy_url']);
-            if (mappedProxy) return mappedProxy;
+
+            // Prefer complete URL field when it is already a full URL.
+            const mappedUrl = getMappedUrl(mapped, ['url']);
+            if (/^https?:\/\//i.test(String(mappedUrl))) return mappedUrl;
+
+            // If proxy_url/url contains only AKfy... convert it into full Apps Script URL.
+            const mappedProxy = getMappedUrl(mapped, ['proxy_url', 'url']);
+            const completedProxy = completeGasUrl(mappedProxy, fileId);
+            if (completedProxy) return completedProxy;
+
+            // Most reliable path: use current GAS web app URL + Drive file id.
             if (fileId && gasWebAppUrl) return `${gasWebAppUrl}?id=${encodeURIComponent(fileId)}`;
 
             // If the mapped value is a normal public URL, iframe it directly.
