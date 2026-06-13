@@ -58,7 +58,8 @@
             min-height: 100vh;
             display: flex;
             flex-direction: column;
-            overflow: hidden;
+            overflow-y: auto;
+            overflow-x: hidden;
         }
 
         /* Scrollbars */
@@ -80,13 +81,12 @@
         .dashboard-container {
             display: flex;
             flex-direction: column;
-            height: 100vh;
+            min-height: calc(100vh - var(--footer-h));
             padding: 1.5rem;
             max-width: 1800px;
             margin: 0 auto;
             width: 100%;
             flex-grow: 1;
-            min-height: 0;
         }
 
         /* STICKY FOOTER */
@@ -213,6 +213,11 @@
             border: 1px solid rgba(27, 122, 62, 0.4);
             border-radius: 20px;
             padding: 4px 10px;
+            transition: background 0.6s ease, border-color 0.6s ease;
+        }
+        .live-badge.syncing {
+            background: rgba(231, 76, 60, 0.18);
+            border-color: rgba(231, 76, 60, 0.45);
         }
         .live-dot {
             width: 6px;
@@ -220,17 +225,35 @@
             border-radius: 50%;
             background: #2ecc71;
             animation: pulse 1.8s infinite;
+            transition: background 0.6s ease;
         }
-        @keyframes pulse {
-            0% { opacity: 0.4; }
-            50% { opacity: 1; }
-            100% { opacity: 0.4; }
+        .live-dot.syncing {
+            background: #e74c3c;
+            animation: pulse-red 0.75s infinite;
+        }
+        .live-dot.ready {
+            background: #2ecc71;
+            animation: pulse 1.8s infinite;
         }
         .live-text {
             font-size: 10px;
             color: #2ecc71;
             font-weight: 500;
             letter-spacing: 0.06em;
+            transition: color 0.6s ease;
+        }
+        .live-text.syncing {
+            color: #e74c3c;
+        }
+        @keyframes pulse {
+            0% { opacity: 0.4; }
+            50% { opacity: 1; }
+            100% { opacity: 0.4; }
+        }
+        @keyframes pulse-red {
+            0%   { opacity: 0.5; transform: scale(0.9); }
+            50%  { opacity: 1;   transform: scale(1.3); }
+            100% { opacity: 0.5; transform: scale(0.9); }
         }
 
         /* KPI Panel */
@@ -306,7 +329,8 @@
             grid-template-columns: 410px 1fr;
             gap: 1.25rem;
             flex-grow: 1;
-            min-height: 0;
+            min-height: 520px;
+            height: calc(100vh - 340px);
             margin-bottom: 1rem;
         }
 
@@ -819,9 +843,6 @@
         .dashboard-container {
             max-width: 1920px;
         }
-        .kpi-row {
-            grid-template-columns: repeat(5, minmax(0, 1fr));
-        }
         .workspace-split {
             grid-template-columns: minmax(320px, 410px) minmax(0, 1fr);
         }
@@ -902,7 +923,7 @@
                     </div>
                 </div>
                 <div class="header-right hero-stack">
-                    <div class="live-badge"><div class="live-dot"></div><span class="live-text">GDRIVE READY</span></div>
+                    <div class="live-badge" id="sync-badge"><div class="live-dot syncing" id="sync-dot"></div><span class="live-text" id="sync-text">SYNCING…</span></div>
                     <div class="hero-visual" aria-hidden="true">
                         <svg viewBox="0 0 520 260" role="img" focusable="false" xmlns="http://www.w3.org/2000/svg">
                             <defs>
@@ -1059,6 +1080,47 @@
         // You can override this by adding "__gas_web_app_url__" in gdrive_mapping.json.
         let gasWebAppUrl = 'https://script.google.com/macros/s/AKfycbymLkKRqFFOzyAYw6XBOxKUwztbGsY-J3FAyp6AiI37f0YkueBRi1kx4SWb7MWcLJ1f/exec';
 
+        // ── Sync badge helpers ──────────────────────────────────────────
+        function setSyncState(state) {
+            // state: 'syncing' | 'ready' | 'local'
+            const badge = document.getElementById('sync-badge');
+            const dot   = document.getElementById('sync-dot');
+            const txt   = document.getElementById('sync-text');
+            if (!badge) return;
+            if (state === 'syncing') {
+                badge.classList.add('syncing');
+                dot.className   = 'live-dot syncing';
+                txt.className   = 'live-text syncing';
+                txt.textContent = 'SYNCING\u2026';
+            } else if (state === 'ready') {
+                badge.classList.remove('syncing');
+                dot.className   = 'live-dot ready';
+                txt.className   = 'live-text';
+                txt.textContent = 'READY FOR EVENTS';
+            } else {
+                badge.classList.remove('syncing');
+                dot.className   = 'live-dot ready';
+                txt.className   = 'live-text';
+                txt.textContent = 'LOCAL MODE';
+            }
+        }
+
+        // ── Load gdrive_mapping.json on startup ─────────────────────────
+        setSyncState('syncing');
+        fetch('gdrive_mapping.json?_=' + Date.now())
+            .then(r => { if (!r.ok) throw new Error('No mapping'); return r.json(); })
+            .then(data => {
+                gdriveMapping = data;
+                // Honour optional override of GAS web app URL stored in mapping.
+                if (data.__gas_web_app_url__) gasWebAppUrl = data.__gas_web_app_url__;
+                setSyncState('ready');
+                renderContents(events);
+            })
+            .catch(() => {
+                setSyncState('local');
+                renderContents(events);
+            });
+
         /*
          * GitHub Pages + Google Drive asset resolver
          * ------------------------------------------------------------
@@ -1201,37 +1263,7 @@
             return rawUrl || String(mapped);
         }
 
-        // Fetch Google Drive mapping if it exists
-        fetch('gdrive_mapping.json')
-            .then(response => {
-                if (!response.ok) throw new Error('Network response was not ok');
-                return response.json();
-            })
-            .then(data => {
-                gdriveMapping = data;
-                if (data['__gas_web_app_url__']) {
-                    gasWebAppUrl = data['__gas_web_app_url__'];
-                    console.log('Google Apps Script Web App URL loaded:', gasWebAppUrl);
-                }
-                console.log('Google Drive mapping loaded:', Object.keys(gdriveMapping).length, 'assets mapped.');
-                
-                // Update live badge if connected to Google Drive
-                const liveBadge = document.querySelector('.live-badge');
-                if (liveBadge) {
-                    liveBadge.style.background = 'rgba(26, 115, 232, 0.2)';
-                    liveBadge.style.borderColor = 'rgba(26, 115, 232, 0.4)';
-                    const liveDot = liveBadge.querySelector('.live-dot');
-                    if (liveDot) liveDot.style.background = '#1a73e8';
-                    const liveText = liveBadge.querySelector('.live-text');
-                    if (liveText) liveText.textContent = 'GOOGLE DRIVE SYNC';
-                }
-                
-                // Re-render contents to load images from Google Drive thumbnails
-                filterEvents();
-            })
-            .catch(error => {
-                console.warn('Google Drive mapping file (gdrive_mapping.json) not found or invalid. Using local fallbacks.', error);
-            });
+        // gdrive_mapping.json is fetched earlier at startup (see setSyncState / fetch block above).
 
         // Copy protection funny messages
         const funnyMessages = [
@@ -1453,9 +1485,10 @@
             }
         }
 
-        // Initialize lists
+        // Initialize lists — rendering deferred to after gdrive_mapping.json fetch above.
+        // Populating year/venue dropdowns still happens on DOMContentLoaded.
         window.addEventListener('DOMContentLoaded', () => {
-            renderContents(events);
+            // renderContents is called after fetch resolves (or fails) above.
         });
     </script>
 </body>
